@@ -1,0 +1,52 @@
+[
+    {
+        "user_id": 1057992616039432233,
+        "name": "haraldkohl",
+        "mention": "<@1057992616039432233>",
+        "zeitraum": "25.07.2025 - 27.07.2025",
+        "grund": "Wochenendurlaub",
+        "nachrichten_id": 1396677075263553578,
+        "eingereicht_am": "2025-07-21T04:16:04.389243",
+        "enddatum": "2025-07-27"
+    },
+    {
+        "user_id": 395190548492976132,
+        "name": "kaan.blackghost",
+        "mention": "<@395190548492976132>",
+        "zeitraum": "22.07.2025-24.07.2025",
+        "grund": "Übernachtung bei Vater",
+        "nachrichten_id": 1396851336988983468,
+        "eingereicht_am": "2025-07-21T15:48:31.510888",
+        "enddatum": "2025-07-24"
+    },
+    {
+        "user_id": 1381632335468040245,
+        "name": "sparmodus",
+        "mention": "<@1381632335468040245>",
+        "zeitraum": "20.07.2025-27.07.2025",
+        "grund": "Urlaub 🧳",
+        "nachrichten_id": 1396905994398994553,
+        "eingereicht_am": "2025-07-21T19:25:42.857501",
+        "enddatum": "2025-07-27"
+    },
+    {
+        "user_id": 244520659609190400,
+        "name": "marroko",
+        "mention": "<@244520659609190400>",
+        "zeitraum": "22.07.2025 - 15.08.2025",
+        "grund": "Urlaub",
+        "nachrichten_id": 1397254297904742452,
+        "eingereicht_am": "2025-07-22T18:29:44.827123",
+        "enddatum": "2025-08-15"
+    },
+    {
+        "user_id": 211864381732945920,
+        "name": "aureliablack_",
+        "mention": "<@211864381732945920>",
+        "zeitraum": "23.07.2025 - 25.07.2025",
+        "grund": "Sicherheitshalber, weiß nicht wann Internet wieder da ist",
+        "nachrichten_id": 1397543171633971221,
+        "eingereicht_am": "2025-07-23T13:37:37.779926",
+        "enddatum": "2025-07-25"
+    }
+]

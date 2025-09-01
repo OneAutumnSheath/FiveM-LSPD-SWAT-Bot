@@ -1,0 +1,7 @@
+# config/beurlaubung_config.yaml
+
+# Die ID des Kanals, in dem der Button zum Eintragen der Beurlaubung platziert wird.
+panel_channel_id: 1243648164981116978 # Bitte anpassen
+
+# Die ID des Kanals, in dem die Beurlaubungen als Log dokumentiert werden.
+dokumentations_channel_id: 1402028117756870666 # Bitte anpassen

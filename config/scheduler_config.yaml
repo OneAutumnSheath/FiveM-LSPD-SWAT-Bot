@@ -1,0 +1,11 @@
+# config/scheduler_config.yaml
+
+# Eine Liste von Nachrichten, die nach einem Zeitplan gesendet werden sollen.
+# Du kannst hier später weitere Nachrichten hinzufügen.
+scheduled_messages:
+  - name: "wochen-sonntag" # Ein eindeutiger Name für diese Aufgabe
+    enabled: true
+    channel_id: 1097625957575180318  # ID des Ziel-Kanals
+    day_of_week: 6  # Der Tag, an dem gesendet wird (0=Montag, 1=Dienstag, ..., 6=Sonntag)
+    time: "19:00"   # Die Uhrzeit im Format HH:MM
+    message: "<@&1097625926243733536>\n\nDenkt dran, euren FiveM-Namen richtig zu setzen!\n\n ARMY DN | NAME" # Die Nachricht, die gesendet werden soll

@@ -1,0 +1,24 @@
+units:
+  Management:
+    channel_id: 1142910990036504576
+    members:
+    - additional_text: ''
+      member_id: '477512925418881026'
+      rank: 1097834442283827290
+      rank_sort_id: 0
+      sort_id: 0
+    - additional_text: ''
+      member_id: '303698430998347777'
+      rank: 1108008526846103664
+      rank_sort_id: 1
+      sort_id: 1
+    - additional_text: ''
+      member_id: '364150967815503904'
+      rank: 1097648080020574260
+      rank_sort_id: 2
+      sort_id: 2
+    - additional_text: ''
+      member_id: '530133851004076052'
+      rank: 1097648080020574260
+      rank_sort_id: 3
+      sort_id: 3

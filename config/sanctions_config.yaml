@@ -1,0 +1,18 @@
+# Der Server, auf dem das System aktiv ist
+guild_id: 1097625621875675188
+
+# Channel-IDs
+antrag_channel_id: 1141458218359459860      # Hier werden die Anträge per Button gestartet
+sanktion_channel_id: 1143288582136664225     # Hier landen einfache Sanktionen
+management_channel_id: 1388865166967312575 # Info-Channel für genehmigte Sanktionen
+eskalations_channel_id: 1388865166967312575 # Channel für Eskalationen (3+ Verwarnungen)
+
+# Rollen-IDs
+management_ping_role_id: 1097648080020574260 # Rolle, die im Management-Channel gepingt wird
+verwarnung_1_role_id: 1143934031071817769
+verwarnung_2_role_id: 1143934164924633118
+
+# Rollen, die Anträge genehmigen/ablehnen dürfen (wird für lokale Prüfung in der View genutzt)
+berechtigte_rollen_ids:
+  - 1289716380580712522
+  - 1289716456220528670

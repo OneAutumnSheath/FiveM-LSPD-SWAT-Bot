@@ -1,0 +1,4 @@
+# config/asservatenkammer_config.yaml
+
+# Die ID des Kanals, in dem das Button-Panel platziert wird und die Logs erscheinen.
+channel_id: 1353065535960780952

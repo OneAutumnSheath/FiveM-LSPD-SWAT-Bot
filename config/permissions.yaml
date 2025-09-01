@@ -1,0 +1,95 @@
+roles:
+    '1097625891632316436':
+    - wochentrennung
+    '1097625893880479777':
+    - kasse.einzahlen
+    - kasse.auszahlen
+    '1097625926243733536':
+    - asservatenkammer.beschlagnahmung
+    '1097648080020574260':
+    - units
+    - personal
+    - aufstellung
+    - sanktion
+    - personal.uprank
+    - units.eintritt
+    - units.austritt
+    - units.aufstieg
+    - units.abstieg
+    - unitlist.deckname.set
+    - unitlist.deckname.remove
+    - unitlist.update
+    - personal.einstellen
+    - personal.kuendigen
+    - personal.derank
+    - personal.neuedn
+    - personal.rename
+    - sanktion.create
+    - copnet.sperre.erstellen
+    '1097650390230630580':
+    - uprank.antrag.div1
+    - copnet.sperre.aufheben
+    - copnet.sperre.erstellen
+    '1097650413165084772':
+    - kasse
+    - kasse
+    - sanktion
+    - units.eintritt
+    - units.austritt
+    - units.aufstieg
+    - units.abstieg
+    - personal.einstellen
+    - personal.kuendigen
+    - personal.uprank
+    - personal.derank
+    - personal.neuedn
+    - personal.rename
+    - sanktion.create
+    - zeremonie.log
+    - copnet.sperre.aufheben
+    - copnet.sperre.erstellen
+    - timer.create
+    - timer.list
+    - timer.delete
+    '1097832273669267616':
+    - upranksperre
+    '1097834442283827290':
+    - statsall
+    '1098192699426877453':
+    - kasse
+    '1108008526846103664':
+    - zeremonie.log
+    - copnet.sperre.aufheben
+    '1134146376482181270':
+    - unitliste
+    '1196072112977358968':
+    - aufstellung
+    - units
+    - personal
+    '1331306902897823745':
+    - aufstellung
+    '1355628983265530078':
+    - web.login
+    '1367815114564173874':
+    - upranksperre
+users:
+    '1155133804235726869':
+    - upranksperre
+    - '*'
+    '303698430998347777':
+    - '*'
+    - wochentrennung
+    '477512925418881026':
+    - stats_admin
+    - '*'
+    '523922957232504844':
+    - sanktion
+    '575702580085260288':
+    - '*'
+    - '*'
+    '648964669368696835':
+    - aufstellung
+    '834713334740942899':
+    - kasse
+    - wochentrennung
+    - '*'

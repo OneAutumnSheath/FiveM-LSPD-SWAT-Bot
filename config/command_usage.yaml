@@ -1,0 +1,372 @@
+'1010993282534346865':
+  request-access: 3
+'1014217753672024105':
+  request-access: 2
+'1055069888248561704':
+  aufstellung: 3
+  request-access: 6
+'1089193842424676413':
+  request-access: 1
+'1100770935440674899':
+  request-access: 7
+'1155133804235726869':
+  request-access: 2
+  unit-austritt: 1
+  uprank: 1
+'1215031393868849184':
+  kassenstand: 1
+  ready: 2
+  request-access: 2
+  uprank: 1
+'1250783540300349496':
+  aufstellung: 1
+  request-access: 6
+'1277948608028741715':
+  request-access: 3
+'1348935772249657405':
+  request-access: 2
+'1357316257648476260':
+  aufstellung: 1
+  request-access: 2
+'244520659609190400':
+  request-access: 1
+'257968972354420737':
+  request-access: 4
+  unit-abstieg: 1
+  unit-aufstieg: 1
+  unit-austritt: 2
+  unit-eintritt: 2
+'264765964917276673':
+  einstellen: 7
+  kuendigen: 3
+  remove_member: 1
+  request-access: 7
+  sanktion: 1
+  set_unit: 1
+  unit-abstieg: 1
+  unit-aufstieg: 13
+  unit-austritt: 6
+  unit-eintritt: 6
+  uprank: 4
+'270216307629096961':
+  derank: 1
+  einstellen: 6
+  kuendigen: 3
+  remove_member: 1
+  unit-aufstieg: 1
+  unit-austritt: 4
+  unit-eintritt: 6
+  uprank: 6
+'286174738131451906':
+  request-access: 1
+'292415126017933322':
+  request-access: 2
+'297775873216610305':
+  derank: 2
+  einstellen: 83
+  kuendigen: 39
+  remove-deckname: 2
+  rename_member: 1
+  request-access: 8
+  sanktion: 46
+  set-deckname: 7
+  unit-abstieg: 2
+  unit-aufstieg: 38
+  unit-austritt: 53
+  unit-eintritt: 79
+  uprank: 129
+'303698430998347777':
+  add: 2
+  add_member: 101
+  add_streamer: 3
+  addmember: 4
+  admindelabmeldung: 19
+  asservatenkammer: 6
+  aufstellung: 2
+  auszahlen: 28
+  changedn: 18
+  changerank: 7
+  check_role_id: 4
+  checkpermissions: 6
+  commandstats: 3
+  derank: 14
+  einstellen: 85
+  einzahlen: 15
+  export_roles: 1
+  kassenstand: 3
+  kuendigen: 54
+  list: 2
+  list-decknamen: 1
+  list_roles: 1
+  masscommands: 38
+  masscommands-format: 22
+  mirror: 3
+  neuedn: 39
+  ready: 3
+  remove: 2
+  remove-deckname: 10
+  remove_member: 128
+  remove_streamer: 1
+  rename_member: 10
+  request-access: 14
+  rolle: 2
+  sanktion: 37
+  sanktionsantrag_setup: 22
+  send-kassenstand: 13
+  set-deckname: 27
+  set_unit: 27
+  setchannel: 1
+  setpermissions: 22
+  statsreport: 2
+  status: 3
+  test_dm: 1
+  test_streams: 1
+  unit-abstieg: 16
+  unit-aufstieg: 51
+  unit-austritt: 88
+  unit-eintritt: 123
+  unitlist: 29
+  update_units: 64
+  uprank: 128
+  uprank_sperre: 3
+  wartung: 1
+  wochentrennung: 7
+  zeremonielog: 3
+'364150967815503904':
+  derank: 1
+  einstellen: 20
+  kuendigen: 9
+  sanktion: 6
+  unit-abstieg: 1
+  unit-aufstieg: 6
+  unit-austritt: 14
+  unit-eintritt: 13
+  uprank: 30
+'373503104097714197':
+  request-access: 6
+'375706956217712640':
+  request-access: 1
+'376026850562146304':
+  einstellen: 1
+  sanktion: 1
+  unit-aufstieg: 1
+  unit-austritt: 3
+  unit-eintritt: 5
+'392391982049394698':
+  request-access: 3
+'395190548492976132':
+  aufstellung: 1
+  request-access: 3
+'399274183520944156':
+  einstellen: 9
+  kuendigen: 10
+  remove_member: 1
+  unit-austritt: 4
+  unit-eintritt: 14
+  unsetpermissions: 1
+  uprank: 2
+'399293564065939457':
+  asservatenkammer: 1
+  aufstellung: 2
+  einstellen: 5
+  einzahlen: 3
+  kuendigen: 17
+  rename_member: 4
+  request-access: 2
+  sanktion: 11
+  unit-abstieg: 2
+  unit-aufstieg: 12
+  unit-austritt: 8
+  unit-eintritt: 15
+  uprank: 4
+'437524681319383040':
+  request-access: 5
+'477512925418881026':
+  aufstellung: 8
+  commandstats: 1
+  einstellen: 4
+  kuendigen: 2
+  rename_member: 2
+  rolle: 1
+  sanktion: 1
+  statsreport: 3
+  unit-aufstieg: 10
+  unit-austritt: 3
+  unit-eintritt: 2
+  uprank: 9
+'493447921208131585':
+  einstellen: 1
+  rename_member: 1
+  set-deckname: 1
+  unit-aufstieg: 4
+  unit-austritt: 3
+  unit-eintritt: 5
+  uprank: 2
+'500722913658535948':
+  request-access: 3
+'523922957232504844':
+  asservatenkammer: 3
+  einzahlen: 2
+  kuendigen: 1
+  request-access: 1
+  sanktion: 30
+  unit-eintritt: 1
+  uprank: 1
+'530133851004076052':
+  einstellen: 8
+  kuendigen: 4
+  sanktion: 2
+  unit-abstieg: 2
+  unit-aufstieg: 5
+  unit-austritt: 4
+  unit-eintritt: 8
+  uprank: 9
+'575702580085260288':
+  asservatenkammer: 1
+  checkpermissions: 1
+  commandstats: 1
+  request-access: 1
+  setup: 2
+  uprank: 1
+  wochentrennung: 1
+'640137747008454656':
+  einstellen: 6
+  kuendigen: 10
+  sanktion: 4
+  unit-aufstieg: 3
+  unit-austritt: 3
+  unit-eintritt: 5
+'648964669368696835':
+  aufstellung: 2
+  einstellen: 8
+  kuendigen: 6
+  request-access: 1
+  unit-abstieg: 1
+  unit-aufstieg: 1
+  unit-austritt: 4
+  unit-eintritt: 4
+  uprank: 18
+'653253034335272972':
+  unit-aufstieg: 2
+'657868095532171274':
+  request-access: 1
+'661676452046962688':
+  einstellen: 1
+  kuendigen: 4
+  remove_member: 2
+  unit-aufstieg: 1
+  unit-eintritt: 2
+  uprank: 5
+'691292645724782645':
+  request-access: 1
+'696031456467877888':
+  auszahlen: 9
+  einstellen: 6
+  kuendigen: 6
+  request-access: 1
+  sanktion: 9
+  unit-aufstieg: 5
+  unit-austritt: 2
+  unit-eintritt: 9
+  uprank: 2
+  wochentrennung: 1
+'698351187124289576':
+  changedn: 1
+  derank: 7
+  einstellen: 102
+  kuendigen: 47
+  neuedn: 1
+  rename_member: 9
+  request-access: 1
+  unit-abstieg: 2
+  unit-aufstieg: 21
+  unit-austritt: 31
+  unit-eintritt: 47
+  uprank: 97
+'708293101399048213':
+  auszahlen: 2
+  einzahlen: 4
+  sanktion: 2
+  unit-abstieg: 1
+  unit-aufstieg: 1
+'717059889511268412':
+  einstellen: 5
+  unit-aufstieg: 11
+  unit-austritt: 1
+  unit-eintritt: 3
+  uprank: 5
+'720648916084850738':
+  request-access: 1
+'721547236424679497':
+  request-access: 1
+'723056876752863242':
+  request-access: 4
+'724363251424428052':
+  einstellen: 5
+  unit-abstieg: 1
+  unit-aufstieg: 2
+  unit-austritt: 12
+  unit-eintritt: 10
+  uprank: 2
+'746119870554308688':
+  request-access: 1
+'785952134910443521':
+  sanktion: 2
+'790744603720548352':
+  request-access: 1
+'806294325729165332':
+  request-access: 1
+'817865586406981692':
+  aufstellung: 4
+'834713334740942899':
+  admindelabmeldung: 10
+  aufstellung: 12
+  auszahlen: 656
+  changedn: 11
+  derank: 17
+  einstellen: 58
+  einzahlen: 73
+  kassenstand: 1
+  kuendigen: 57
+  masscommands: 29
+  masscommands-format: 8
+  neuedn: 44
+  remove-deckname: 1
+  remove_member: 80
+  rename_member: 1
+  request-access: 8
+  sanktion: 48
+  set-deckname: 3
+  unit-abstieg: 5
+  unit-aufstieg: 15
+  unit-austritt: 46
+  unit-eintritt: 79
+  unitlist: 1
+  update_units: 24
+  uprank: 132
+  uprank_sperre: 1
+  wochentrennung: 18
+  zeremonielog: 1
+'877984871262351480':
+  changedn: 1
+  derank: 4
+  einstellen: 147
+  kuendigen: 134
+  masscommands-format: 1
+  remove-deckname: 1
+  remove_member: 4
+  rename_member: 21
+  request-access: 1
+  sanktion: 11
+  set-deckname: 10
+  unit-abstieg: 4
+  unit-aufstieg: 139
+  unit-austritt: 79
+  unit-eintritt: 105
+  uprank: 182
+'885951177706078298':
+  request-access: 2
+'916682700792930315':
+  request-access: 3
+'939533269341438052':
+  request-access: 8
