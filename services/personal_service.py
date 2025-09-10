@@ -93,7 +93,7 @@ class PersonalService(commands.Cog):
                 await cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
     
     async def _get_all_members_for_sheet(self):
-        query = "SELECT m.dn, m.name, m.rank, DATE_FORMAT(m.hired_at, '%d.%m.%Y') as hired_at, m.discord_id, u.management, u.weapon_logistics, u.education, u.human_resources, u.military_police, u.usaf, u.navy, u.seals, u.soc, u.jag, u.infantry, u.medcorps, u.hundestaffel, u.kantine FROM members m LEFT JOIN units u ON m.dn = u.dn"
+        query = "SELECT m.dn, m.name, m.rank, DATE_FORMAT(m.hired_at, '%d.%m.%Y') as hired_at, m.discord_id, u.internal_affairs, u.police_academy, u.human_resources, u.bikers, u.swat, u.asd, u.detectives, u.gtf, u.shp FROM members m LEFT JOIN units u ON m.dn = u.dn"
         return await self._execute_query(query, fetch="all")
 
     def _blocking_update_google_sheets(self, members_data: list):
@@ -123,8 +123,7 @@ class PersonalService(commands.Cog):
             if not dn: return {"success": False, "error": "Keine freie Dienstnummer in der Division gefunden."}
         try:
             await self._execute_query("INSERT INTO members (dn, name, rank, discord_id, hired_at) VALUES (%s, %s, %s, %s, CURDATE())", (dn, name, new_rank_id, user.id))
-            await self._execute_query("INSERT INTO units (dn, infantry) VALUES (%s, TRUE)", (dn,))
-            await self._execute_query("UPDATE unit_limits SET aktuelle_mitglieder = aktuelle_mitglieder + 1 WHERE unit_name = 'infantry'")
+            await self._execute_query("INSERT INTO units (dn) VALUES (%s, TRUE)", (dn,))
         except Exception as e:
             return {"success": False, "error": f"Datenbankfehler: {e}"}
         try:

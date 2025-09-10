@@ -66,6 +66,8 @@ roles:
     - aufstellung
     - units
     - personal
+    '1293917052511453224':
+    - kasse.stand
     '1331306902897823745':
     - aufstellung
     '1355628983265530078':

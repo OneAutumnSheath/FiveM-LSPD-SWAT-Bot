@@ -11,19 +11,36 @@ from typing import TYPE_CHECKING, Dict, List, Any
 if TYPE_CHECKING:
     from main import MyBot
 
-# Konfiguration gehört zur Logik und lebt im Service
+# Konfiguration: Jede Gruppe hat einen Namen und ihre Rollen
 TRACKED_UNITS = {
-        1348395813323411476: [1303452683402874952, 1303452678915100703, 1303452678915100703, 1303452597709176917, 1254505255564214303], # IA
-        1348395813323411476: [1067448372744687656, 1117385633548226561, 935017286442561606], # PA
-        1348395813323411476: [1068295101731831978, 1117385689789640784, 935016743431188500], # HR
-        1348395813323411476: [1356684451597254766, 1356684286354526219, 1356684087024291952, 1356683996100300931], # BIKERS
-        1348395813323411476: [1187452851119722646, 1204733801591214100, 1039282890011324446, 1234564137191866428, 1053391614246133872, 1293333665258148000, 935018728104534117], # SWAT
-        1348395813323411476: [1325637503184670783, 1325637796806787134, 1307817641448181791, 1307816089618616461, 1307815743911497810, 1401271341449089034, 1401269389793427558], # ASD
-        1348395813323411476: [1294014237844443230, 1294014095116206110, 1294013934734671964, 1294013552364879903, 1294013303776874496, 1280940167032602734], # DETECTIVES
-        1348395813323411476: [1376903575338352751, 1376903570854772766, 1376903562205990932, 1376903544904482919, 1376692842742681701, 1376692683288084560], # GTF
-        1348395813323411476: [1325631255101968454, 1325631253189361795, 1395498540402479134, 1212825593796890694, 1212825879898759241, 1212825936592896122] # SHP
+    1348395813323411476: {
+        "IA": [1303452597709176917, 1303452678915100703, 1303452683402874952, 1303452595008049242],
+        "PA": [935017286442561606, 1117385633548226561, 1067448372744687656, 935017371146522644],
+        "HR": [935016743431188500, 1117385689789640784, 1068295101731831978, 935017143467147294],
+        "BIKERS": [1356683996100300931, 1356684087024291952, 1356684286354526219, 1356684451597254766],
+        "SWAT": [935018728104534117, 1293333665258148000, 1053391614246133872, 1234564137191866428, 1039282890011324446, 1204733801591214100, 1187452851119722646],
+        "ASD": [1401269389793427558, 1401271341449089034, 1307815743911497810, 1307816089618616461, 1307817641448181791, 1325637796806787134, 1325637503184670783],
+        "DETECTIVES": [1280940167032602734, 1294013303776874496, 1294013552364879903, 1294013934734671964, 1294014095116206110, 1294014237844443230],
+#        "SHP": [1212825936592896122, 1212825879898759241, 1212825593796890694, 1395498540402479134, 1325631253189361795, 1325631255101968454]
+    }
 }
+
+# Gruppen-Emojis für bessere Optik
+GROUP_EMOJIS = {
+    "IA": "🔍",
+    "PA": "👮",
+    "HR": "📋",
+    "BIKERS": "🏍️",
+    "SWAT": "🚁",
+    "ASD": "🚨",
+    "DETECTIVES": "🕵️",
+#    "SHP": "🛡️"
+}
+
+# Discord Limits
 MAX_FIELD_LENGTH = 1024
+MAX_EMBED_LENGTH = 6000
+MAX_FIELDS_PER_EMBED = 25
 
 # Google Sheets Konfiguration
 SERVICE_ACCOUNT_FILE = "service_account.json"
@@ -60,77 +77,225 @@ class UnitListService(commands.Cog):
         match = re.search(r'\[USA-(\d+)\]', member.display_name)
         return int(match.group(1)) if match else float('inf')
 
-    async def _create_embeds_for_channel(self, channel_id: int, guild: discord.Guild) -> List[discord.Embed]:
-            if channel_id not in TRACKED_UNITS: return []
+    def _calculate_embed_length(self, embed: discord.Embed) -> int:
+        """Berechnet die ungefähre Länge eines Embeds."""
+        length = len(embed.title or "") + len(embed.description or "")
+        for field in embed.fields:
+            length += len(field.name) + len(field.value)
+        if embed.footer:
+            length += len(embed.footer.text or "")
+        return length
+
+    def _should_create_new_embed(self, current_embed: discord.Embed, new_content_length: int) -> bool:
+        """Prüft, ob ein neues Embed erstellt werden sollte."""
+        current_length = self._calculate_embed_length(current_embed)
+        field_count = len(current_embed.fields)
+        
+        # Prüfe Limits
+        would_exceed_length = current_length + new_content_length > MAX_EMBED_LENGTH - 200  # Buffer für Footer
+        would_exceed_fields = field_count >= MAX_FIELDS_PER_EMBED - 1  # Buffer für weitere Felder
+        
+        return would_exceed_length or would_exceed_fields
+
+    async def _create_embed_for_group(self, group_name: str, role_ids: List[int], guild: discord.Guild) -> List[discord.Embed]:
+        """Erstellt ein oder mehrere Embeds für eine spezifische Gruppe."""
+        embeds = []
+        group_emoji = GROUP_EMOJIS.get(group_name, "📁")
+        
+        # Erstes Embed für die Gruppe erstellen
+        current_embed = discord.Embed(
+            title=f"{group_emoji} {group_name}",
+            color=discord.Color.dark_blue(),
+            timestamp=datetime.now()
+        )
+        
+        # Beschreibung hinzufügen
+        total_members = 0
+        for role_id in role_ids:
+            role = guild.get_role(role_id)
+            if role:
+                total_members += len(role.members)
+        
+        current_embed.description = f"**Gesamtmitglieder:** {total_members}"
+
+        for role_id in role_ids:
+            role = guild.get_role(role_id)
+            if not role:
+                continue
+
+            # Mitglieder sortieren und formatieren
+            sorted_members = sorted(role.members, key=self._extract_dienstnummer)
+            member_lines = []
             
-            embeds = []
-            embed = discord.Embed(title="Mitgliederliste", color=discord.Color.dark_blue())
+            for member in sorted_members:
+                deckname = await self.get_deckname(member.id)
+                member_text = f"{member.mention} [**{deckname}**]" if deckname else member.mention
+                member_lines.append(member_text)
+            
+            field_content = "\n".join(member_lines) or "*Keine Mitglieder*"
+            role_name = f"🔹 {role.name}"
 
-            for role_id in TRACKED_UNITS[channel_id]:
-                role = guild.get_role(role_id)
-                if not role: continue
-
-                sorted_members = sorted(role.members, key=self._extract_dienstnummer)
-                member_lines = []
-                for member in sorted_members:
-                    deckname = await self.get_deckname(member.id)
-                    member_text = f"{member.mention} [**{deckname}**]" if deckname else member.mention
-                    member_lines.append(member_text)
+            # Prüfen, ob ein neues Embed benötigt wird
+            estimated_field_length = len(role_name) + len(field_content)
+            
+            if self._should_create_new_embed(current_embed, estimated_field_length):
+                # Aktuelles Embed abschließen und zur Liste hinzufügen
+                if current_embed.fields:
+                    current_embed.set_footer(text=f"📅 Aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+                    embeds.append(current_embed)
                 
-                field_content = "\n".join(member_lines) or "Keine Mitglieder"
-                role_name = f"**{role.name.upper()}**"
+                # Neues Embed für die gleiche Gruppe erstellen
+                embed_number = len(embeds) + 1
+                current_embed = discord.Embed(
+                    title=f"{group_emoji} {group_name} (Teil {embed_number + 1})",
+                    color=discord.Color.dark_blue(),
+                    timestamp=datetime.now()
+                )
 
-                # --- START: KORRIGIERTE LOGIK ZUM AUFTEILEN VON FELDERN ---
+            # Feld-Inhalt aufteilen, wenn er zu lang ist
+            if len(field_content) > MAX_FIELD_LENGTH:
+                current_embed = await self._add_split_field(current_embed, role_name, member_lines, embeds, group_name, group_emoji)
+            else:
+                # Normales Feld hinzufügen
+                current_embed.add_field(
+                    name=role_name,
+                    value=field_content,
+                    inline=False
+                )
+
+        # Letztes Embed hinzufügen, falls es Felder hat
+        if current_embed.fields or current_embed.description:
+            current_embed.set_footer(text=f"📅 Aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+            embeds.append(current_embed)
                 
-                # Prüfen, ob die Embed-Gesamtlänge überschritten wird
-                # 25 Felder pro Embed, 6000 Zeichen insgesamt
-                if len(embed.fields) >= 24 or len(str(embed)) + len(field_content) > 5900:
-                    embed.set_footer(text=f"Aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
-                    embeds.append(embed)
-                    embed = discord.Embed(title="Mitgliederliste (Fortsetzung)", color=discord.Color.dark_blue())
+        return embeds
 
-                # Teile den Inhalt auf, wenn er das Zeichenlimit für ein Feld überschreitet
-                if len(field_content) > MAX_FIELD_LENGTH:
-                    part_num = 1
-                    current_chunk = ""
-                    for line in member_lines:
-                        if len(current_chunk) + len(line) + 1 > MAX_FIELD_LENGTH:
-                            embed.add_field(name=f"{role_name} (Teil {part_num})", value=current_chunk, inline=False)
-                            current_chunk = line
-                            part_num += 1
-                        else:
-                            current_chunk += f"\n{line}"
+    async def _add_split_field(self, current_embed: discord.Embed, role_name: str, member_lines: List[str], 
+                              embeds: List[discord.Embed], group_name: str, group_emoji: str) -> discord.Embed:
+        """Teilt ein zu langes Feld auf mehrere Felder oder Embeds auf."""
+        part_num = 1
+        current_chunk = ""
+        
+        for line in member_lines:
+            line_with_newline = f"{line}\n"
+            
+            # Prüfen, ob die Zeile in den aktuellen Chunk passt
+            if len(current_chunk) + len(line_with_newline) > MAX_FIELD_LENGTH:
+                if current_chunk:  # Nur hinzufügen, wenn Chunk nicht leer ist
+                    field_name = f"{role_name} (Teil {part_num})" if part_num > 1 else role_name
                     
-                    # Den letzten Teil hinzufügen
-                    if current_chunk:
-                        embed.add_field(name=f"{role_name} (Teil {part_num})", value=current_chunk, inline=False)
-                else:
-                    # Wenn der Inhalt passt, als einzelnes Feld hinzufügen
-                    embed.add_field(name=role_name, value=field_content, inline=False)
-
-                # --- ENDE: KORRIGIERTE LOGIK ---
-
-            if embed.fields:
-                embed.set_footer(text=f"Aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
-                embeds.append(embed)
+                    # Prüfen, ob ein neues Embed benötigt wird
+                    estimated_length = len(field_name) + len(current_chunk)
+                    if self._should_create_new_embed(current_embed, estimated_length):
+                        # Aktuelles Embed abschließen
+                        if current_embed.fields:
+                            current_embed.set_footer(text=f"📅 Aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+                            embeds.append(current_embed)
+                        
+                        # Neues Embed für die gleiche Gruppe erstellen
+                        embed_number = len(embeds) + 1
+                        current_embed = discord.Embed(
+                            title=f"{group_emoji} {group_name} (Teil {embed_number + 1})",
+                            color=discord.Color.dark_blue(),
+                            timestamp=datetime.now()
+                        )
+                    
+                    current_embed.add_field(
+                        name=field_name,
+                        value=current_chunk.strip(),
+                        inline=False
+                    )
                 
-            return embeds
+                # Neuen Chunk mit der aktuellen Zeile starten
+                current_chunk = line_with_newline
+                part_num += 1
+            else:
+                current_chunk += line_with_newline
+        
+        # Letzten Chunk hinzufügen
+        if current_chunk:
+            field_name = f"{role_name} (Teil {part_num})" if part_num > 1 else role_name
+            
+            # Prüfen, ob ein neues Embed benötigt wird
+            estimated_length = len(field_name) + len(current_chunk)
+            if self._should_create_new_embed(current_embed, estimated_length):
+                # Aktuelles Embed abschließen
+                if current_embed.fields:
+                    current_embed.set_footer(text=f"📅 Aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+                    embeds.append(current_embed)
+                
+                # Neues Embed für die gleiche Gruppe erstellen
+                embed_number = len(embeds) + 1
+                current_embed = discord.Embed(
+                    title=f"{group_emoji} {group_name} (Teil {embed_number + 1})",
+                    color=discord.Color.dark_blue(),
+                    timestamp=datetime.now()
+                )
+            
+            current_embed.add_field(
+                name=field_name,
+                value=current_chunk.strip(),
+                inline=False
+            )
+        
+        return current_embed
 
     async def _update_channel_messages(self, channel_id: int):
+        """Aktualisiert alle Nachrichten in einem Channel - eine Nachricht pro Gruppe."""
         channel = self.bot.get_channel(channel_id)
-        if not channel: return
+        if not channel:
+            print(f"⚠️ Channel {channel_id} nicht gefunden")
+            return
 
         guild = channel.guild
-        embeds = await self._create_embeds_for_channel(channel_id, guild)
-        if not embeds: return
+        
+        if channel_id not in TRACKED_UNITS:
+            print(f"⚠️ Keine Gruppen für Channel {channel_id} konfiguriert")
+            return
+
+        groups = TRACKED_UNITS[channel_id]
 
         try:
-            async for message in channel.history(limit=50):
-                if message.author == self.bot.user: await message.delete()
-        except discord.Forbidden: pass
+            print(f"🗑️ Lösche alte Nachrichten in Channel {channel.name}")
+            # Alle alten Bot-Nachrichten löschen
+            deleted_count = 0
+            async for message in channel.history(limit=200):  # Höheres Limit für viele Gruppen
+                if message.author == self.bot.user:
+                    await message.delete()
+                    deleted_count += 1
+            
+            if deleted_count > 0:
+                print(f"✅ {deleted_count} alte Nachrichten gelöscht")
+                
+        except discord.Forbidden:
+            print("❌ Keine Berechtigung zum Löschen von Nachrichten")
+        except Exception as e:
+            print(f"⚠️ Fehler beim Löschen: {e}")
+
+        # Für jede Gruppe separate Nachrichten senden
+        total_messages_sent = 0
         
-        for embed in embeds:
-            await channel.send(embed=embed)
+        for group_name, role_ids in groups.items():
+            try:
+                print(f"📤 Erstelle Nachrichten für Gruppe: {group_name}")
+                
+                # Embeds für diese Gruppe erstellen
+                group_embeds = await self._create_embed_for_group(group_name, role_ids, guild)
+                
+                if not group_embeds:
+                    print(f"⚠️ Keine Embeds für Gruppe {group_name} erstellt")
+                    continue
+                
+                # Alle Embeds dieser Gruppe senden
+                for i, embed in enumerate(group_embeds, 1):
+                    await channel.send(embed=embed)
+                    total_messages_sent += 1
+                    print(f"✅ {group_name} - Nachricht {i}/{len(group_embeds)} gesendet")
+                    
+            except Exception as e:
+                print(f"❌ Fehler beim Senden der Nachrichten für Gruppe {group_name}: {e}")
+        
+        print(f"🎉 Insgesamt {total_messages_sent} Nachrichten für {len(groups)} Gruppen gesendet")
 
     # --- Öffentliche API-Methoden ---
     
@@ -153,9 +318,10 @@ class UnitListService(commands.Cog):
 
     async def trigger_update(self):
         """Löst eine vollständige Aktualisierung aller Unit-Listen aus."""
-        print("[INFO] Aktualisierung aller Unit-Listen wird ausgelöst.")
+        print("🔄 [INFO] Aktualisierung aller Unit-Listen wird ausgelöst.")
         for channel_id in TRACKED_UNITS.keys():
             await self._update_channel_messages(channel_id)
+        print("✅ [INFO] Alle Unit-Listen wurden aktualisiert.")
 
     # --- Google Sheets Methoden ---
     
@@ -199,13 +365,13 @@ class UnitListService(commands.Cog):
                         raise Exception(f"Token request failed: {response.status} - {error_text}")
 
         except Exception as e:
-            print(f"Fehler beim Abrufen des Google Access Tokens: {e}")
+            print(f"❌ Fehler beim Abrufen des Google Access Tokens: {e}")
             raise
 
     async def sync_decknamen_to_sheets(self) -> bool:
         """Synchronisiert alle Decknamen zu Google Sheets in die Spalte C4:C19."""
         try:
-            print("[INFO] Starte Google Sheets Synchronisation...")
+            print("🔄 [INFO] Starte Google Sheets Synchronisation...")
             
             # Access Token holen
             token = await self._get_google_access_token()

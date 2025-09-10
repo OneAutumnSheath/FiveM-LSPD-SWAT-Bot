@@ -46,7 +46,7 @@ class AsservatenkammerService(commands.Cog):
         embed.add_field(name="Beschlagnahmt", value=data['beschlagnahmt'], inline=False)
         
         # Footer wird an das neue Format angepasst
-        embed.set_footer(text=f"Zuständiger Soldat: {zustaendiger_soldat}\nLSPD Asservatenkammer")
+        embed.set_footer(text=f"Zuständiger Officer: {zustaendiger_soldat}\nLSPD Asservatenkammer")
         # --- ENDE DER ANPASSUNG ---
 
         try:
@@ -77,7 +77,7 @@ class AsservatenkammerService(commands.Cog):
         embed.add_field(name="\u200b", value="\u200b", inline=True) 
         embed.add_field(name="Beschlagnahmt", value=data['beschlagnahmt'], inline=False)
         embed.add_field(name="Grund der Auslagerung", value=data["grund"], inline=False)
-        embed.set_footer(text=f"Zuständiger Soldat: {zustaendiger_soldat}\nLSPD Asservatenkammer")
+        embed.set_footer(text=f"Zuständiger Officer: {zustaendiger_soldat}\nLSPD Asservatenkammer")
         # --- ENDE DER ANPASSUNG ---
         
         try:

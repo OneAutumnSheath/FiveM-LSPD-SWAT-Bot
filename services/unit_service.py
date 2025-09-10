@@ -86,7 +86,7 @@ class UnitService(commands.Cog):
         await self._execute_query(query, (change, unit_name))
 
     async def _get_all_members_for_sheet_async(self):
-        query = "SELECT m.dn, m.name, m.rank, DATE_FORMAT(m.hired_at, '%d.%m.%Y') as hired_at, m.discord_id, u.management, u.weapon_logistics, u.education, u.human_resources, u.military_police, u.usaf, u.navy, u.seals, u.soc, u.jag, u.infantry, u.medcorps, u.hundestaffel, u.kantine FROM members m LEFT JOIN units u ON m.dn = u.dn"
+        query = "SELECT m.dn, m.name, m.rank, DATE_FORMAT(m.hired_at, '%d.%m.%Y') as hired_at, m.discord_id, u.internal_affairs, u.police_academy, u.human_resources, u.bikers, u.swat, u.asd, u.detectives, u.gtf, u.shp FROM members m LEFT JOIN units u ON m.dn = u.dn"
         return await self._execute_query(query, fetch="all")
 
     def _blocking_update_google_sheets(self, members: list):

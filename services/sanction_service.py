@@ -1,7 +1,6 @@
 # bot/services/sanction_service.py
 
 import discord
-from discord import Interaction
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta, timezone
 import aiomysql
@@ -39,131 +38,127 @@ class SanctionService(commands.Cog):
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 await cursor.execute(query, args)
-                if fetch == "one": result = await cursor.fetchone()
-                elif fetch == "all": result = await cursor.fetchall()
-                else: result = None
+                if fetch == "one": 
+                    result = await cursor.fetchone()
+                elif fetch == "all": 
+                    result = await cursor.fetchall()
+                else: 
+                    result = None
                 await conn.commit()
                 return result
 
     async def _ensure_table_exists(self):
         await self._execute_query("""
             CREATE TABLE IF NOT EXISTS verwarnungen (
-                id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT NOT NULL,
-                role_id BIGINT NOT NULL, granted_at DATETIME NOT NULL, KEY user_id_idx (user_id)
+                id INT AUTO_INCREMENT PRIMARY KEY, 
+                user_id BIGINT NOT NULL,
+                role_id BIGINT NOT NULL, 
+                granted_at DATETIME NOT NULL, 
+                KEY user_id_idx (user_id)
             );
         """)
 
-    async def get_member_by_dn(self, dn: str) -> Dict[str, Any] | None:
-        return await self._execute_query("SELECT discord_id, name FROM members WHERE dn = %s", (dn,), fetch="one")
-
     async def count_warnings_from_db(self, user_id: int) -> int:
         """Zählt aktive Verwarnungen für einen User aus der Datenbank."""
-        result = await self._execute_query("SELECT COUNT(*) as count FROM verwarnungen WHERE user_id = %s", (user_id,), fetch="one")
+        result = await self._execute_query(
+            "SELECT COUNT(*) as count FROM verwarnungen WHERE user_id = %s", 
+            (user_id,), 
+            fetch="one"
+        )
         return result['count'] if result else 0
 
-    async def create_sanction_proposal(self, interaction: Interaction, dn: str, sanktionsmass: str, paragraphen: str, sachverhalt: str, zeugen: str | None) -> Dict[str, Any]:
-        """Bereitet einen Sanktionsantrag vor."""
-        member_data = await self.get_member_by_dn(dn)
-        if not member_data:
-            return {"success": False, "error": f"Dienstnummer `{dn}` nicht gefunden."}
+    async def extract_and_process_warnings(self, member: discord.Member, strafe: str) -> int:
+        """
+        Extrahiert Verwarnungen aus der Strafe und verarbeitet sie.
+        Gibt die Anzahl der neuen Verwarnungen zurück.
+        """
+        # Verwarnungen aus der Strafe extrahieren
+        verwarnung_patterns = [
+            r"(\d+)\s*\.?\s*verwarnung",
+            r"verwarnung",
+            r"(\d+)\s*verwarn",
+            r"verwarn"
+        ]
         
-        member = interaction.guild.get_member(member_data['discord_id'])
-        if not member:
-            return {"success": False, "error": f"Mitglied mit DN `{dn}` nicht auf diesem Server."}
+        neue_verwarnungen = 0
+        strafe_lower = strafe.lower()
+        
+        # Prüfe auf explizite Anzahl (z.B. "1. Verwarnung", "2 Verwarnungen")
+        for pattern in verwarnung_patterns[:2]:  # Nur die ersten beiden mit Zahlen
+            matches = re.findall(pattern, strafe_lower, re.IGNORECASE)
+            if matches:
+                neue_verwarnungen = sum(int(m) for m in matches if m.isdigit())
+                break
+        
+        # Wenn keine Zahl gefunden, aber "Verwarnung" im Text, dann 1 Verwarnung
+        if neue_verwarnungen == 0:
+            for pattern in verwarnung_patterns[2:]:  # Die ohne Zahlen
+                if re.search(pattern, strafe_lower, re.IGNORECASE):
+                    neue_verwarnungen = 1
+                    break
 
-        vorhandene = await self.count_warnings_from_db(member.id)
-        matches = re.findall(r"(\d+)\s*Verwarn", sanktionsmass, re.IGNORECASE)
-        neue = sum(int(m) for m in matches)
-        gesamt = vorhandene + neue
+        # Verwarnungen verarbeiten falls welche gefunden
+        if neue_verwarnungen > 0:
+            await self._process_warnings(member, neue_verwarnungen)
+        
+        return neue_verwarnungen
 
-        # DisplayService für die Anzeige verwenden
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
-        if display_service:
-            member_display = await display_service.get_display(member)
-            requester_display = await display_service.get_display(interaction.user, is_footer=True)
-        else:
-            member_display = member.mention
-            requester_display = interaction.user.display_name
-
-        embed = discord.Embed(title="📄 Neuer Sanktionsantrag", color=discord.Color.orange())
-        embed.add_field(name="Zielperson", value=f"{member_display} (`{dn}`)", inline=False)
-        embed.add_field(name="Sanktionsmaß", value=sanktionsmass, inline=False)
-        embed.add_field(name="Rechtsgrundlage", value=paragraphen, inline=False)
-        embed.add_field(name="Sachverhalt", value=sachverhalt, inline=False)
-        if zeugen:
-            embed.add_field(name="Zeugen", value=zeugen, inline=False)
-        embed.add_field(name="Verwarnung (neu)", value=str(neue), inline=True)
-        embed.add_field(name="Verwarnung (bisher)", value=str(vorhandene), inline=True)
-        embed.add_field(name="Verwarnung (gesamt)", value=str(gesamt), inline=True)
-        embed.set_footer(text=f"Eingereicht von {requester_display}")
-
-        return {"success": True, "embed": embed, "member": member, "neue_verwarnungen": neue, "sanktionsmass": sanktionsmass}
-
-    async def approve_sanction(self, member: discord.Member, neue_verwarnungen: int, sanktionsmass: str) -> int:
+    async def _process_warnings(self, member: discord.Member, neue_verwarnungen: int):
+        """Verarbeitet neue Verwarnungen für ein Mitglied."""
         aktuelle_verwarnungen = await self.count_warnings_from_db(member.id)
         gesamt = aktuelle_verwarnungen + neue_verwarnungen
         
-        rollen_config = [(1, self.config.get('verwarnung_1_role_id')), (2, self.config.get('verwarnung_2_role_id'))]
+        print(f"🔄 Verarbeite {neue_verwarnungen} neue Verwarnungen für {member.display_name}")
+        print(f"   Vorher: {aktuelle_verwarnungen}, Nachher: {gesamt}")
+        
+        # Rollen basierend auf Verwarnungsanzahl zuweisen
+        rollen_config = [
+            (1, self.config.get('verwarnung_1_role_id')),
+            (2, self.config.get('verwarnung_2_role_id'))
+        ]
         
         for stufe, rollen_id in rollen_config:
-            if gesamt >= stufe:
+            if gesamt >= stufe and rollen_id:
                 rolle = member.guild.get_role(rollen_id)
                 if rolle and rolle not in member.roles:
-                    await member.add_roles(rolle, reason="Sanktion genehmigt")
-                    await self._execute_query("INSERT INTO verwarnungen (user_id, role_id, granted_at) VALUES (%s, %s, %s)", (member.id, rolle.id, datetime.now(timezone.utc)))
-        
-        # DisplayService für die Eskalationsnachricht verwenden
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
-        if display_service:
-            member_display = await display_service.get_display(member)
-        else:
-            member_display = member.mention
-            
+                    try:
+                        await member.add_roles(rolle, reason=f"Sanktion: {gesamt} Verwarnungen erreicht")
+                        await self._execute_query(
+                            "INSERT INTO verwarnungen (user_id, role_id, granted_at) VALUES (%s, %s, %s)", 
+                            (member.id, rolle.id, datetime.now(timezone.utc))
+                        )
+                        print(f"✅ Rolle {rolle.name} für {member.display_name} hinzugefügt")
+                    except Exception as e:
+                        print(f"❌ Fehler beim Hinzufügen der Rolle {rolle.name}: {e}")
+
+        # Eskalation bei 3+ Verwarnungen
         if gesamt >= 3:
-            if channel := self.bot.get_channel(self.config.get('eskalations_channel_id')):
-                await channel.send(f"⚠️ {member_display} hat insgesamt {gesamt} Verwarnungen und somit die Eskalationsstufe erreicht!")
+            await self._handle_escalation(member, gesamt)
 
-        if mgmt_channel := self.bot.get_channel(self.config.get('management_channel_id')):
-            await mgmt_channel.send(f"<@&{self.config.get('management_ping_role_id')}>")
-            embed = discord.Embed(title="📢 Management: Sanktion genehmigt", color=discord.Color.blurple())
-            embed.add_field(name="Zielperson", value=member_display, inline=False)
-            embed.add_field(name="Sanktionsmaß", value=sanktionsmass, inline=False)
-            await mgmt_channel.send(embed=embed)
-            
-        return gesamt
-
-    async def create_simple_sanction(self, user: discord.Member, sanktionsmass: str, grund: str, interaction: Interaction):
-        channel = self.bot.get_channel(self.config.get('sanktion_channel_id'))
-        if not channel: return False
-        
-        # DisplayService für die Anzeige verwenden
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
-        if display_service:
-            user_display = await display_service.get_display(user)
-            executor_display = await display_service.get_display(interaction.user, is_footer=True)
-        else:
-            user_display = user.mention
-            executor_display = interaction.user.display_name
-        
-        embed = discord.Embed(title="Sanktion verhängt", description=f"Hiermit erhält {user_display} eine Sanktion.", color=discord.Color.orange(), timestamp=datetime.now(timezone.utc))
-        embed.add_field(name="Sanktionsmaß", value=sanktionsmass, inline=False)
-        embed.add_field(name="Grund", value=grund, inline=False)
-        embed.add_field(name="Benachrichtigung an", value="<@&1289716541658497055>\n<@&1097648080020574260>", inline=False)
-        embed.set_footer(text=f"LSPD Management | ausgeführt von {executor_display}")
-        
-        # Content mit DisplayService formatieren
-        await channel.send(content=user_display if display_service else user.mention, embed=embed)
-        return True
+    async def _handle_escalation(self, member: discord.Member, gesamt_verwarnungen: int):
+        """Behandelt Eskalation bei 3+ Verwarnungen."""
+        # Eskalation nur loggen, keine Channel-Benachrichtigung mehr
+        print(f"⚠️ ESKALATION: {member.display_name} hat {gesamt_verwarnungen} Verwarnungen erreicht!")
 
     @tasks.loop(hours=1)
     async def verwarnung_cleanup_task(self):
+        """Entfernt abgelaufene Verwarnungen (nach 7 Tagen)."""
         guild = self.bot.get_guild(self.config.get('guild_id'))
-        if not guild: return
+        if not guild: 
+            return
 
-        fourteen_days_ago = datetime.now(timezone.utc) - timedelta(days=14)
-        abgelaufene = await self._execute_query("SELECT * FROM verwarnungen WHERE granted_at < %s", (fourteen_days_ago,), fetch="all")
-        if not abgelaufene: return
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        abgelaufene = await self._execute_query(
+            "SELECT * FROM verwarnungen WHERE granted_at < %s", 
+            (seven_days_ago,), 
+            fetch="all"
+        )
+        
+        if not abgelaufene: 
+            return
 
+        print(f"🧹 Bereinige {len(abgelaufene)} abgelaufene Verwarnungen (nach 7 Tagen)...")
+        
         ids_to_delete = [eintrag["id"] for eintrag in abgelaufene]
         
         for eintrag in abgelaufene:
@@ -171,19 +166,26 @@ class SanctionService(commands.Cog):
                 member = await guild.fetch_member(eintrag["user_id"])
                 rolle = guild.get_role(eintrag["role_id"])
                 if member and rolle and rolle in member.roles:
-                    await member.remove_roles(rolle, reason="Verwarnung abgelaufen")
+                    await member.remove_roles(rolle, reason="Verwarnung abgelaufen (7 Tage)")
+                    print(f"✅ Verwarnung-Rolle {rolle.name} von {member.display_name} entfernt (nach 7 Tagen)")
             except discord.NotFound:
-                continue # Mitglied ist nicht mehr auf dem Server
+                print(f"⚠️ Mitglied {eintrag['user_id']} nicht mehr auf dem Server")
+                continue
             except Exception as e:
-                print(f"Fehler beim Entfernen abgelaufener Verwarnungs-Rolle: {e}")
+                print(f"❌ Fehler beim Entfernen abgelaufener Verwarnungs-Rolle: {e}")
 
+        # Datenbankeinträge löschen
         if ids_to_delete:
             format_strings = ','.join(['%s'] * len(ids_to_delete))
-            await self._execute_query(f"DELETE FROM verwarnungen WHERE id IN ({format_strings})", tuple(ids_to_delete))
+            await self._execute_query(
+                f"DELETE FROM verwarnungen WHERE id IN ({format_strings})", 
+                tuple(ids_to_delete)
+            )
+            print(f"🗑️ {len(ids_to_delete)} abgelaufene Verwarnungseinträge aus DB gelöscht (nach 7 Tagen)")
 
     @verwarnung_cleanup_task.before_loop
     async def before_cleanup_loop(self):
-        pass
+        await self.bot.wait_until_ready()
 
 async def setup(bot: "MyBot"):
     await bot.add_cog(SanctionService(bot))
