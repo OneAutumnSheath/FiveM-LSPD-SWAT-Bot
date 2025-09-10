@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from services.log_service import LogService
     
 # --- Konstanten ---
-KASSEN_CHANNEL_ID = 1339424277446787143
+KASSEN_CHANNEL_ID = 1213569335168081941
 
 class KassenCommands(commands.Cog):
     def __init__(self, bot: "MyBot"):

@@ -12,7 +12,10 @@ if TYPE_CHECKING:
     from services.log_service import LogService
     from services.display_service import DisplayService
 
-PERSONAL_CHANNEL_ID = 1097625981671448698
+PERSONAL_CHANGE = 1097625981671448698
+PERSONAL_CHANGE = 1213569259024678973
+PERSONAL_FIRE = 1213569260996010135
+PERSONAL_HIRE = 1231644627698712586
 MGMT_ID = 1097648080020574260
 
 class PersonalCommands(commands.Cog):
@@ -49,9 +52,9 @@ class PersonalCommands(commands.Cog):
                          f"**Dienstnummer:** `{result['dn']}`\n\n"
                          f"Hochachtungsvoll,\n<@&{MGMT_ID}>"),
             color=discord.Color.green()
-        ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
-        if channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
+        if channel := self.bot.get_channel(PERSONAL_HIRE):
             await channel.send(content=display_name, embed=embed_announcement)
 
         embed_confirm = discord.Embed(
@@ -87,14 +90,14 @@ class PersonalCommands(commands.Cog):
 
         embed_announcement = discord.Embed(
             title="📢 Kündigung",
-            description=(f"**Hiermit wird {display_name} offiziell aus der Army entlassen.**\n\n"
+            description=(f"**Hiermit wird {display_name} offiziell aus dem LSPD entlassen.**\n\n"
                          f"**Grund:** {result['reason']}\n"
                          f"**Dienstnummer:** `{result['dn']}`\n\n"
                          f"Hochachtungsvoll,\n<@&{MGMT_ID}>"),
             color=discord.Color.red()
-        ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
-        if channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
+        if channel := self.bot.get_channel(PERSONAL_FIRE):
             await channel.send(content=display_name, embed=embed_announcement)
         await interaction.followup.send(f"✅ {user.display_name} wurde erfolgreich gekündigt.", ephemeral=True)
 
@@ -127,8 +130,8 @@ class PersonalCommands(commands.Cog):
             description += f"Neue Dienstnummer: **{result['new_dn']}**\n\n"
         description += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
         
-        embed = discord.Embed(title="Beförderung", description=description, color=discord.Color.green()).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
-        if channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
+        embed = discord.Embed(title="Beförderung", description=description, color=discord.Color.green()).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        if channel := self.bot.get_channel(PERSONAL_CHANGE):
             await channel.send(content=display_name, embed=embed)
         
         embed_confirm = discord.Embed(title="✅ Beförderung erfolgreich", description=f"{display_name} wurde erfolgreich befördert.\n📋 **Neuer Rang:** {neuer_rang.mention}\n📂 **Division:** <@&{result['new_division_id']}>", color=discord.Color.green())
@@ -160,8 +163,8 @@ class PersonalCommands(commands.Cog):
             description += f"Neue Dienstnummer: **{result['new_dn']}**\n\n"
         description += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
 
-        embed = discord.Embed(title="Degradierung", description=description, color=discord.Color.red()).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
-        if channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
+        embed = discord.Embed(title="Degradierung", description=description, color=discord.Color.red()).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        if channel := self.bot.get_channel(PERSONAL_CHANGE):
             await channel.send(content=display_name, embed=embed)
 
         embed_confirm = discord.Embed(title="✅ Degradierung erfolgreich", description=f"{display_name} wurde erfolgreich degradiert.\n📋 **Neuer Rang:** {neuer_rang.mention}\n📂 **Division:** <@&{result['new_division_id']}>", color=discord.Color.red())
@@ -192,8 +195,8 @@ class PersonalCommands(commands.Cog):
             title="🔄 Dienstnummer Änderung",
             description=(f"**Dienstnummer-Update für {display_name}!**\n\n**Alte DN:** `{result['old_dn']}`\n**Neue DN:** `{result['new_dn']}`"),
             color=discord.Color.blue()
-        ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
-        if channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
+        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        if channel := self.bot.get_channel(PERSONAL_CHANGE):
             await channel.send(content=display_name, embed=embed_announcement)
         
         await interaction.followup.send(f"✅ Dienstnummer für {display_name} erfolgreich zu `{result['new_dn']}` geändert.", ephemeral=True)
@@ -224,9 +227,9 @@ class PersonalCommands(commands.Cog):
                 title="📛 Namensänderung",
                 description=description,
                 color=discord.Color.orange()
-            ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+            ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
             
-            if channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
+            if channel := self.bot.get_channel(PERSONAL_CHANGE):
                 await channel.send(content=display_name, embed=embed_announcement)
 
             confirm_message = f"✅ {display_name} wurde erfolgreich in **{new_name}** umbenannt."

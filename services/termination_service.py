@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 # --- Konfiguration ---
 HAUPT_SERVER_ID = 1097625621875675188
-SPREADSHEET_ID = "1LuBHz2JQIhJjF80I0CZVuvF8pAOmRNKU77htabzx3_k"
+SPREADSHEET_ID = "  "
 SHEET_NAME = "Rohdaten"
 CREDS_FILE = "service_account.json"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -90,11 +90,11 @@ class TerminationService(commands.Cog):
         
         # Nachricht 1: Embed im Personal-Channel
         if personal_channel := self.bot.get_channel(PERSONAL_CHANNEL_ID):
-            description_text = (f"Hiermit wird das ehemalige Mitglied **{name}** (ID: `{member.id}`) automatisch aus der ARMY entlassen.\n\n"
+            description_text = (f"Hiermit wird das ehemalige Mitglied **{name}** (ID: `{member.id}`) automatisch aus dem LSPD entlassen.\n\n"
                                 f"**Grund:** Discord verlassen\n\n"
                                 f"Hochachtungsvoll,\n<@&{MGMT_ROLE_ID}>")
             embed = discord.Embed(title="Automatische Entlassung", description=description_text, color=discord.Color.red(), timestamp=datetime.now(timezone.utc))
-            embed.set_footer(text="U.S. ARMY Management")
+            embed.set_footer(text="LSPD Management")
             await personal_channel.send(embed=embed)
 
         # Nachricht 2: Text im Hinweis-Channel

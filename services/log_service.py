@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from main import MyBot
 
 # --- Konstanten ---
-BOT_LOG_CHANNEL = 1333208767059464243 # Deine Log-Kanal-ID
+BOT_LOG_CHANNEL = 952307485295931402 # Deine Log-Kanal-ID
 
 class LogService(commands.Cog):
     def __init__(self, bot: "MyBot"):

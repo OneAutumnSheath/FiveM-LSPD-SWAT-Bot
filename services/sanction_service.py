@@ -149,7 +149,7 @@ class SanctionService(commands.Cog):
         embed.add_field(name="Sanktionsmaß", value=sanktionsmass, inline=False)
         embed.add_field(name="Grund", value=grund, inline=False)
         embed.add_field(name="Benachrichtigung an", value="<@&1289716541658497055>\n<@&1097648080020574260>", inline=False)
-        embed.set_footer(text=f"U.S. ARMY Management | ausgeführt von {executor_display}")
+        embed.set_footer(text=f"LSPD Management | ausgeführt von {executor_display}")
         
         # Content mit DisplayService formatieren
         await channel.send(content=user_display if display_service else user.mention, embed=embed)

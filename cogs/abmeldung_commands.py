@@ -59,7 +59,7 @@ class AbmeldungModal(discord.ui.Modal, title="Abmeldung einreichen"):
         embed.add_field(name="Name", value=interaction.user.mention, inline=False)
         embed.add_field(name="Zeitraum", value=self.zeitraum.value, inline=False)
         embed.add_field(name="Grund", value=self.grund.value.strip(), inline=False)
-        embed.set_footer(text="U.S. ARMY Abmeldesystem")
+        embed.set_footer(text="LSPD Abmeldesystem")
         
         channel = interaction.guild.get_channel(ABMELDE_CHANNEL_ID)
         msg = await channel.send(embed=embed)

@@ -14,8 +14,7 @@ if TYPE_CHECKING:
     from services.display_service import DisplayService
 
 # --- Konstanten (wie im Original) ---
-UNIT_CHANNEL_ID = 1173700352403591189
-MGMT_ID = 1097648080020574260
+UNIT_CHANNEL_ID = 1213569262602559568
 
 class UnitCommands(commands.Cog):
     def __init__(self, bot: "MyBot"):
@@ -51,9 +50,9 @@ class UnitCommands(commands.Cog):
         
         embed = discord.Embed(
             title="🟢 Unit Eintritt", 
-            description=f"📌 {display_name} ist der Unit {result.get('unit').mention} beigetreten.\n\n✍️ **Grund:** {result.get('grund')}{zusatz_text}\n\nHochachtungsvoll,\n<@&{MGMT_ID}>", 
+            description=f"📌 {display_name} ist der Unit {result.get('unit').mention} beigetreten.\n\n✍️ **Grund:** {result.get('grund')}{zusatz_text}", 
             color=discord.Color.green()
-        ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
         if channel := self.bot.get_channel(UNIT_CHANNEL_ID):
             await channel.send(content=display_name, embed=embed)
@@ -85,9 +84,9 @@ class UnitCommands(commands.Cog):
             
         embed = discord.Embed(
             title="🔴 Unit Austritt", 
-            description=f"📌 {display_name} hat die Unit {result.get('unit').mention} verlassen.\n\n✍️ Grund: {result.get('grund')}\n\nHochachtungsvoll,\n<@&{MGMT_ID}>", 
+            description=f"📌 {display_name} hat die Unit {result.get('unit').mention} verlassen.\n\n✍️ Grund: {result.get('grund')}", 
             color=discord.Color.red()
-        ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
         if channel := self.bot.get_channel(UNIT_CHANNEL_ID):
             await channel.send(content=display_name, embed=embed)
@@ -120,9 +119,9 @@ class UnitCommands(commands.Cog):
         requester_display_name = await display_service.get_display(interaction.user, is_footer=True)
         embed = discord.Embed(
             title="🔹 Unit Aufstieg",
-            description=(f"📌 **{display_name} steigt innerhalb der Unit {unit.mention} auf.**\n\n✍️ **Grund:** {grund}\n\n📌 **Neuer Posten:** {neuer_posten.mention if neuer_posten else 'Zum vollwertigen Mitglied'}\n\nHochachtungsvoll,\n<@&{MGMT_ID}>"),
+            description=(f"📌 **{display_name} steigt innerhalb der Unit {unit.mention} auf.**\n\n✍️ **Grund:** {grund}\n\n📌 **Neuer Posten:** {neuer_posten.mention if neuer_posten else 'Zum vollwertigen Mitglied'}"),
             color=discord.Color.blue()
-        ).set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
         if channel := self.bot.get_channel(UNIT_CHANNEL_ID):
             await channel.send(content=display_name, embed=embed)
@@ -155,7 +154,7 @@ class UnitCommands(commands.Cog):
         desc += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
         
         embed = discord.Embed(title="🔻 Unit Abstieg", description=desc, color=discord.Color.orange())
-        embed.set_footer(text=f"U.S. ARMY Management | ausgeführt von {requester_display_name}")
+        embed.set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
         if channel := self.bot.get_channel(UNIT_CHANNEL_ID):
             await channel.send(content=display_name, embed=embed)

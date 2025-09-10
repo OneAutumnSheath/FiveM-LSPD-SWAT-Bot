@@ -19,3 +19,4 @@ test.py
 tracked_messages.json
 __pycache__
 data
+.env
