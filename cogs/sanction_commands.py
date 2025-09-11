@@ -11,7 +11,6 @@ from utils.decorators import has_permission, log_on_completion
 if TYPE_CHECKING:
     from main import MyBot
     from services.sanction_service import SanctionService
-    from services.display_service import DisplayService
 
 class SanctionCommands(commands.Cog):
     def __init__(self, bot: "MyBot"):
@@ -40,15 +39,6 @@ class SanctionCommands(commands.Cog):
         service: SanctionService = self.bot.get_cog("SanctionService")
         if not service: 
             return await interaction.followup.send("Fehler: Sanction-Service nicht gefunden.", ephemeral=True)
-
-        # DisplayService für die Anzeige verwenden
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
-        if display_service:
-            user_display = await display_service.get_display(user)
-            executor_display = await display_service.get_display(interaction.user, is_footer=True)
-        else:
-            user_display = user.mention
-            executor_display = interaction.user.display_name
 
         # Verwarnungen aus der Strafe extrahieren und verarbeiten
         neue_verwarnungen = await service.extract_and_process_warnings(user, strafe)
@@ -111,7 +101,7 @@ class SanctionCommands(commands.Cog):
         
         # Footer mit Ausführer und HR-Info
         embed.set_footer(
-            text=f"Ausgeführt von {executor_display} | Ausgeführt von der Human Resources des Departments - in Vertretung für den Chief of Police Tommy Lancaster"
+            text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources des Departments - in Vertretung für den Chief of Police Tommy Lancaster"
         )
         
         # LSPD Logo (falls vorhanden)
@@ -122,7 +112,7 @@ class SanctionCommands(commands.Cog):
         
         # Erfolgsmeldung
         await interaction.followup.send(
-            f"✅ Sanktion für {user_display} wurde erfolgreich erstellt.", 
+            f"✅ Sanktion für {user.mention} wurde erfolgreich erstellt.", 
             ephemeral=True
         )
 

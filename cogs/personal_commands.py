@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from main import MyBot
     from services.personal_service import PersonalService
     from services.log_service import LogService
-    from services.display_service import DisplayService
 
 PERSONAL_CHANGE = 1097625981671448698
 PERSONAL_CHANGE = 1213569259024678973
@@ -31,35 +30,30 @@ class PersonalCommands(commands.Cog):
     async def einstellen(self, interaction: Interaction, user: discord.Member, name: str, dienstgrad: discord.Role, grund: str, dn: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: PersonalService = self.bot.get_cog("PersonalService")
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
         
-        if not service or not display_service: return await interaction.followup.send("Fehler: Einer der benötigten Services wurde nicht gefunden.", ephemeral=True)
+        if not service: 
+            return await interaction.followup.send("Fehler: Personal-Service wurde nicht gefunden.", ephemeral=True)
 
         result = await service.hire_member(interaction.guild, user, name, dienstgrad, grund, dn)
 
         if not result.get("success"):
             return await interaction.followup.send(f"❌ **Fehler:** {result.get('error', 'Unbekannter Fehler')}", ephemeral=True)
         
-        # Anzupassende Person (Erwähnung in der Nachricht)
-        display_name = await display_service.get_display(result['user'])
-        # Ausführende Person (Nickname im Footer)
-        requester_display_name = await display_service.get_display(interaction.user, is_footer=True) 
-        
         embed_announcement = discord.Embed(
             title="🆕 Einstellung",
-            description=(f"**Hiermit wird {display_name} als {result['rank_role'].mention} eingestellt.**\n\n"
+            description=(f"**Hiermit wird {user.mention} als {result['rank_role'].mention} eingestellt.**\n\n"
                          f"**Grund:** {result['reason']}\n"
                          f"**Dienstnummer:** `{result['dn']}`\n\n"
                          f"Hochachtungsvoll,\n<@&{MGMT_ID}>"),
             color=discord.Color.green()
-        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
         if channel := self.bot.get_channel(PERSONAL_HIRE):
-            await channel.send(content=display_name, embed=embed_announcement)
+            await channel.send(content=user.mention, embed=embed_announcement)
 
         embed_confirm = discord.Embed(
             title="✅ Einstellung erfolgreich",
-            description=(f"{display_name} wurde erfolgreich als {result['rank_role'].mention} eingestellt.\n"
+            description=(f"{user.mention} wurde erfolgreich als {result['rank_role'].mention} eingestellt.\n"
                          f"📋 **Dienstnummer:** `{result['dn']}`\n"
                          f"📂 **Division:** <@&{result['division_id']}>"),
             color=discord.Color.green()
@@ -75,14 +69,10 @@ class PersonalCommands(commands.Cog):
     async def kuendigen(self, interaction: Interaction, user: discord.Member, grund: str):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: PersonalService = self.bot.get_cog("PersonalService")
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
         
-        if not service or not display_service: return await interaction.followup.send("Fehler: Einer der benötigten Services wurde nicht gefunden.", ephemeral=True)
+        if not service: 
+            return await interaction.followup.send("Fehler: Personal-Service wurde nicht gefunden.", ephemeral=True)
 
-        # Anzupassende Person (Erwähnung in der Nachricht)
-        display_name = await display_service.get_display(user)
-        # Ausführende Person (Nickname im Footer)
-        requester_display_name = await display_service.get_display(interaction.user, is_footer=True)
         result = await service.fire_member(user, grund)
 
         if not result.get("success"):
@@ -90,15 +80,15 @@ class PersonalCommands(commands.Cog):
 
         embed_announcement = discord.Embed(
             title="📢 Kündigung",
-            description=(f"**Hiermit wird {display_name} offiziell aus dem LSPD entlassen.**\n\n"
+            description=(f"**Hiermit wird {user.mention} offiziell aus dem LSPD entlassen.**\n\n"
                          f"**Grund:** {result['reason']}\n"
                          f"**Dienstnummer:** `{result['dn']}`\n\n"
                          f"Hochachtungsvoll,\n<@&{MGMT_ID}>"),
             color=discord.Color.red()
-        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
         if channel := self.bot.get_channel(PERSONAL_FIRE):
-            await channel.send(content=display_name, embed=embed_announcement)
+            await channel.send(content=user.mention, embed=embed_announcement)
         await interaction.followup.send(f"✅ {user.display_name} wurde erfolgreich gekündigt.", ephemeral=True)
 
     @personal_group.command(name="uprank", description="Befördert ein Mitglied.")
@@ -111,30 +101,25 @@ class PersonalCommands(commands.Cog):
             return await interaction.followup.send("❌ Du hast keine Berechtigung, die Uprank-Sperre zu ignorieren.", ephemeral=True)
             
         service: PersonalService = self.bot.get_cog("PersonalService")
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
         
-        if not service or not display_service: return await interaction.followup.send("Fehler: Einer der benötigten Services wurde nicht gefunden.", ephemeral=True)
+        if not service: 
+            return await interaction.followup.send("Fehler: Personal-Service wurde nicht gefunden.", ephemeral=True)
 
         result = await service.promote_member(interaction.guild, user, neuer_rang, grund, ignore_lock=sperre_ignorieren)
         
         if not result.get("success"):
             return await interaction.followup.send(f"❌ **Fehler:** {result.get('error', 'Unbekannter Fehler')}", ephemeral=True)
 
-        # Anzupassende Person (Erwähnung in der Nachricht)
-        display_name = await display_service.get_display(user)
-        # Ausführende Person (Nickname im Footer)
-        requester_display_name = await display_service.get_display(interaction.user, is_footer=True)
-
-        description = f"Hiermit wurde {display_name} zum {neuer_rang.mention} befördert.\n\nGrund: {grund}\n\n"
+        description = f"Hiermit wurde {user.mention} zum {neuer_rang.mention} befördert.\n\nGrund: {grund}\n\n"
         if result["dn_changed"]:
             description += f"Neue Dienstnummer: **{result['new_dn']}**\n\n"
         description += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
         
-        embed = discord.Embed(title="Beförderung", description=description, color=discord.Color.green()).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        embed = discord.Embed(title="Beförderung", description=description, color=discord.Color.green()).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         if channel := self.bot.get_channel(PERSONAL_CHANGE):
-            await channel.send(content=display_name, embed=embed)
+            await channel.send(content=user.mention, embed=embed)
         
-        embed_confirm = discord.Embed(title="✅ Beförderung erfolgreich", description=f"{display_name} wurde erfolgreich befördert.\n📋 **Neuer Rang:** {neuer_rang.mention}\n📂 **Division:** <@&{result['new_division_id']}>", color=discord.Color.green())
+        embed_confirm = discord.Embed(title="✅ Beförderung erfolgreich", description=f"{user.mention} wurde erfolgreich befördert.\n📋 **Neuer Rang:** {neuer_rang.mention}\n📂 **Division:** <@&{result['new_division_id']}>", color=discord.Color.green())
         await interaction.followup.send(embed=embed_confirm, ephemeral=True)
 
     @personal_group.command(name="derank", description="Degradiert ein Mitglied.")
@@ -144,30 +129,25 @@ class PersonalCommands(commands.Cog):
     async def derank(self, interaction: Interaction, user: discord.Member, neuer_rang: discord.Role, grund: str):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: PersonalService = self.bot.get_cog("PersonalService")
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
         
-        if not service or not display_service: return await interaction.followup.send("Fehler: Einer der benötigten Services wurde nicht gefunden.", ephemeral=True)
+        if not service: 
+            return await interaction.followup.send("Fehler: Personal-Service wurde nicht gefunden.", ephemeral=True)
 
         result = await service.demote_member(interaction.guild, user, neuer_rang, grund)
 
         if not result.get("success"):
             return await interaction.followup.send(f"❌ **Fehler:** {result.get('error', 'Unbekannter Fehler')}", ephemeral=True)
 
-        # Anzupassende Person (Erwähnung in der Nachricht)
-        display_name = await display_service.get_display(user)
-        # Ausführende Person (Nickname im Footer)
-        requester_display_name = await display_service.get_display(interaction.user, is_footer=True)
-
-        description = f"Hiermit wurde {display_name} zum {neuer_rang.mention} degradiert.\n\nGrund: {grund}\n\n"
+        description = f"Hiermit wurde {user.mention} zum {neuer_rang.mention} degradiert.\n\nGrund: {grund}\n\n"
         if result["dn_changed"]:
             description += f"Neue Dienstnummer: **{result['new_dn']}**\n\n"
         description += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
 
-        embed = discord.Embed(title="Degradierung", description=description, color=discord.Color.red()).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        embed = discord.Embed(title="Degradierung", description=description, color=discord.Color.red()).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         if channel := self.bot.get_channel(PERSONAL_CHANGE):
-            await channel.send(content=display_name, embed=embed)
+            await channel.send(content=user.mention, embed=embed)
 
-        embed_confirm = discord.Embed(title="✅ Degradierung erfolgreich", description=f"{display_name} wurde erfolgreich degradiert.\n📋 **Neuer Rang:** {neuer_rang.mention}\n📂 **Division:** <@&{result['new_division_id']}>", color=discord.Color.red())
+        embed_confirm = discord.Embed(title="✅ Degradierung erfolgreich", description=f"{user.mention} wurde erfolgreich degradiert.\n📋 **Neuer Rang:** {neuer_rang.mention}\n📂 **Division:** <@&{result['new_division_id']}>", color=discord.Color.red())
         await interaction.followup.send(embed=embed_confirm, ephemeral=True)
 
     @personal_group.command(name="neuedn", description="Ändert die Dienstnummer eines Mitglieds.")
@@ -177,29 +157,24 @@ class PersonalCommands(commands.Cog):
     async def neuedn(self, interaction: Interaction, user: discord.Member, neue_dn: str):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: PersonalService = self.bot.get_cog("PersonalService")
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
         
-        if not service or not display_service: return await interaction.followup.send("Fehler: Einer der benötigten Services wurde nicht gefunden.", ephemeral=True)
+        if not service: 
+            return await interaction.followup.send("Fehler: Personal-Service wurde nicht gefunden.", ephemeral=True)
 
         result = await service.change_dn(user, neue_dn)
 
         if not result.get("success"):
             return await interaction.followup.send(f"❌ **Fehler:** {result.get('error', 'Unbekannter Fehler')}", ephemeral=True)
         
-        # Anzupassende Person (Erwähnung in der Nachricht)
-        display_name = await display_service.get_display(user)
-        # Ausführende Person (Nickname im Footer)
-        requester_display_name = await display_service.get_display(interaction.user, is_footer=True)
-
         embed_announcement = discord.Embed(
             title="🔄 Dienstnummer Änderung",
-            description=(f"**Dienstnummer-Update für {display_name}!**\n\n**Alte DN:** `{result['old_dn']}`\n**Neue DN:** `{result['new_dn']}`"),
+            description=(f"**Dienstnummer-Update für {user.mention}!**\n\n**Alte DN:** `{result['old_dn']}`\n**Neue DN:** `{result['new_dn']}`"),
             color=discord.Color.blue()
-        ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         if channel := self.bot.get_channel(PERSONAL_CHANGE):
-            await channel.send(content=display_name, embed=embed_announcement)
+            await channel.send(content=user.mention, embed=embed_announcement)
         
-        await interaction.followup.send(f"✅ Dienstnummer für {display_name} erfolgreich zu `{result['new_dn']}` geändert.", ephemeral=True)
+        await interaction.followup.send(f"✅ Dienstnummer für {user.mention} erfolgreich zu `{result['new_dn']}` geändert.", ephemeral=True)
 
     @personal_group.command(name="rename", description="Benennt ein Mitglied um.")
     @app_commands.describe(user="Das Mitglied", new_name="Der neue Name")
@@ -208,18 +183,14 @@ class PersonalCommands(commands.Cog):
     async def rename(self, interaction: Interaction, user: discord.Member, new_name: str):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: PersonalService = self.bot.get_cog("PersonalService")
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
         
-        if not service or not display_service: return await interaction.followup.send("Fehler: Einer der benötigten Services wurde nicht gefunden.", ephemeral=True)
+        if not service: 
+            return await interaction.followup.send("Fehler: Personal-Service wurde nicht gefunden.", ephemeral=True)
 
         result = await service.rename_member(user, new_name)
         
         if result.get("success"):
-            # Anzupassende Person (Erwähnung in der Nachricht)
-            display_name = await display_service.get_display(user)
-            # Ausführende Person (Nickname im Footer)
-            requester_display_name = await display_service.get_display(interaction.user, is_footer=True)
-            description=(f"**{display_name} wurde umbenannt.**\n\n"
+            description=(f"**{user.mention} wurde umbenannt.**\n\n"
                          f"**Alter Name:** `{result.get('old_name', 'N/A')}`\n"
                          f"**Neuer Name:** `{result.get('new_name', 'N/A')}`")
 
@@ -227,12 +198,12 @@ class PersonalCommands(commands.Cog):
                 title="📛 Namensänderung",
                 description=description,
                 color=discord.Color.orange()
-            ).set_footer(text=f"Ausgeführt von {requester_display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+            ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
             
             if channel := self.bot.get_channel(PERSONAL_CHANGE):
-                await channel.send(content=display_name, embed=embed_announcement)
+                await channel.send(content=user.mention, embed=embed_announcement)
 
-            confirm_message = f"✅ {display_name} wurde erfolgreich in **{new_name}** umbenannt."
+            confirm_message = f"✅ {user.mention} wurde erfolgreich in **{new_name}** umbenannt."
             if warning := result.get("warning"):
                 confirm_message += f"\n\n⚠️ **Warnung:** {warning}"
 
