@@ -122,7 +122,7 @@ class PersonalService(commands.Cog):
             if not dn: return {"success": False, "error": "Keine freie Dienstnummer in der Division gefunden."}
         try:
             await self._execute_query("INSERT INTO members (dn, name, rank, discord_id, hired_at) VALUES (%s, %s, %s, %s, CURDATE())", (dn, name, new_rank_id, user.id))
-            await self._execute_query("INSERT INTO units (dn) VALUES (%s, TRUE)", (dn,))
+            await self._execute_query("INSERT INTO units (dn) VALUES (%s)", (dn,))
         except Exception as e:
             return {"success": False, "error": f"Datenbankfehler: {e}"}
         try:
