@@ -32,10 +32,9 @@ class PersonalService(commands.Cog):
         self.sheets_service = None
         self.RANK_MAPPING = {
             1: 935015868444868658, 2: 1294946672941465652, 3: 935015801445056592, 4: 1387536697536811058, 
-            5: 1387536786716098590, 6: 935015740438880286, 7: 1131339674267435008, 8: 1387537827545481410, 
-            9: 1387537817529487592, 10: 937126775010504735, 11: 1387538125060051034, 12: 962360526388727878,
-            13: 1293917052511453224, 14: 935011460998893648, 15: 1293916581784584202, 16: 1361644874293837824, 
-            17: 935010817580089404
+            5: 1387536786716098590, 6: 935015740438880286, 7: 1131339674267435008, 8: 1387537817529487592, 
+            9: 937126775010504735, 10: 1387538125060051034, 11: 962360526388727878, 12: 1293917052511453224,
+            13: 1107769266608017559, 14: 1293916581784584202, 15: 1361644874293837824, 16: 935010817580089404
         }
         self.ROLE_TO_RANK_ID_MAPPING = {v: k for k, v in self.RANK_MAPPING.items()}
         self.bot.loop.create_task(self._async_init_sheets())
@@ -133,7 +132,7 @@ class PersonalService(commands.Cog):
                 if role := guild.get_role(role_id): roles_to_add.append(role)
             if new_division_role := guild.get_role(new_division_id): roles_to_add.append(new_division_role)
             await user.add_roles(*roles_to_add, reason=f"Einstellung: {reason}")
-            await user.edit(nick=f"[USA-{dn}] {name}", reason="Einstellung")
+            await user.edit(nick=f"[PD-{dn}] {name}", reason="Einstellung")
         except discord.HTTPException as e:
             return {"success": True, "warning": f"DB-Eintrag erfolgreich, aber Discord-Aktion fehlgeschlagen: {e}"}
         await self.update_google_sheets()
@@ -178,7 +177,7 @@ class PersonalService(commands.Cog):
             roles_to_add = [new_rank_role]
             if new_division_id: roles_to_add.append(guild.get_role(new_division_id))
             await user.add_roles(*[r for r in roles_to_add if r], reason=f"Beförderung: {reason}")
-            if dn_changed: await user.edit(nick=f"[USA-{new_dn}] {user_name}", reason="Beförderung mit DN-Wechsel")
+            if dn_changed: await user.edit(nick=f"[PD-{new_dn}] {user_name}", reason="Beförderung mit DN-Wechsel")
         except discord.HTTPException as e:
             return {"success": True, "warning": f"DB-Update erfolgreich, aber Discord-Aktion fehlgeschlagen: {e}"}
         if uprank_sperre_service:
@@ -209,7 +208,7 @@ class PersonalService(commands.Cog):
             roles_to_add = [new_rank_role]
             if new_division_id: roles_to_add.append(guild.get_role(new_division_id))
             await user.add_roles(*[r for r in roles_to_add if r], reason=f"Degradierung: {reason}")
-            if dn_changed: await user.edit(nick=f"[USA-{new_dn}] {user_name}", reason="Degradierung mit DN-Wechsel")
+            if dn_changed: await user.edit(nick=f"[PD-{new_dn}] {user_name}", reason="Degradierung mit DN-Wechsel")
         except discord.HTTPException as e:
             return {"success": True, "warning": f"DB-Update erfolgreich, aber Discord-Aktion fehlgeschlagen: {e}"}
         await self.update_google_sheets()
@@ -222,7 +221,7 @@ class PersonalService(commands.Cog):
         if await self._check_dn_exists(new_dn): return {"success": False, "error": f"Die Dienstnummer `{new_dn}` ist bereits vergeben."}
         await self._change_dn_in_db(current_dn, new_dn, user.id)
         try:
-            await user.edit(nick=f"[USA-{new_dn}] {user_name}", reason="Dienstnummer manuell geändert")
+            await user.edit(nick=f"[PD-{new_dn}] {user_name}", reason="Dienstnummer manuell geändert")
         except discord.HTTPException as e:
             return {"success": True, "warning": f"DB-Update erfolgreich, aber Nickname-Update fehlgeschlagen: {e}"}
         await self.update_google_sheets()
@@ -234,7 +233,7 @@ class PersonalService(commands.Cog):
         dn, old_name = member_details["dn"], member_details["name"]
         await self._execute_query("UPDATE members SET name = %s WHERE discord_id = %s", (new_name, user.id))
         try:
-            await user.edit(nick=f"[USA-{dn}] {new_name}", reason="Manuell umbenannt")
+            await user.edit(nick=f"[PD-{dn}] {new_name}", reason="Manuell umbenannt")
         except discord.HTTPException as e:
             return {"success": True, "warning": f"DB-Update erfolgreich, aber Nickname-Update fehlgeschlagen: {e}"}
         await self.update_google_sheets()

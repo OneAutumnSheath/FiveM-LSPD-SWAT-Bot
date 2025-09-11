@@ -1,5 +1,5 @@
 disabled_commands:
-- masscommands
+- none
 maintenance_mode: false
 maintenance_whitelist:
 - 834713334740942899

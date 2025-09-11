@@ -1,5 +1,3 @@
-#cogs/abmeldung_commands.py
-
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -11,7 +9,6 @@ if TYPE_CHECKING:
     from main import MyBot
     from services.abmeldung_service import AbmeldungService
     from services.log_service import LogService
-    from services.display_service import DisplayService # HINZUGEFÜGT
     
 # --- Konstanten ---
 ABMELDE_CHANNEL_ID = 1213569286514413638
@@ -180,18 +177,21 @@ class AbmeldungCommands(commands.Cog):
         print("[AbmeldungCommands] Panel wurde gesetzt.")
         await self.update_abmeldungs_uebersicht_async()
 
-
     async def update_abmeldungs_uebersicht_async(self):
         guild = self.bot.get_guild(GUILD_ID)
-        if not guild: return
+        if not guild: 
+            print("❌ Guild nicht gefunden für Abmeldeübersicht")
+            return
+            
         channel = guild.get_channel(UEBERSICHT_CHANNEL_ID)
-        if not channel: return
+        if not channel: 
+            print(f"❌ Übersichts-Channel {UEBERSICHT_CHANNEL_ID} nicht gefunden")
+            return
         
         service: AbmeldungService = self.bot.get_cog("AbmeldungService")
-        # --- START DER ÄNDERUNG ---
-        display_service: DisplayService = self.bot.get_cog("DisplayService")
-        if not service or not display_service: return
-        # --- ENDE DER ÄNDERUNG ---
+        if not service: 
+            print("❌ AbmeldungService nicht gefunden")
+            return
 
         abmeldungen = await service.get_active_abmeldungen()
         
@@ -199,12 +199,11 @@ class AbmeldungCommands(commands.Cog):
         if abmeldungen:
             desc = []
             for eintrag in abmeldungen:
-                # --- START DER ÄNDERUNG ---
                 member = guild.get_member(eintrag['user_id'])
-                display_name = await display_service.get_display(member)
+                # Verwende einfach den Discord Display Name anstatt Display Service
+                display_name = member.display_name if member else f"Unbekannter User ({eintrag['user_id']})"
                 end_datum_str = eintrag['end_date'].strftime('%d.%m.%Y')
                 desc.append(f"{display_name} (bis {end_datum_str})")
-                # --- ENDE DER ÄNDERUNG ---
             embed.description = "\n".join(desc)
         else:
             embed.description = "Derzeit sind keine Mitglieder abgemeldet."
@@ -212,12 +211,40 @@ class AbmeldungCommands(commands.Cog):
         embed.set_footer(text="U.S. ARMY Abmeldesystem")
 
         try:
-            async for msg in channel.history(limit=10):
-                if msg.author == self.bot.user and msg.embeds and msg.embeds[0].title == "Aktive Abmeldungen":
+            # Suche nach bestehender Übersichts-Nachricht
+            message_found = False
+            async for msg in channel.history(limit=20):
+                if (msg.author == self.bot.user and 
+                    msg.embeds and 
+                    msg.embeds[0].title == "Aktive Abmeldungen"):
                     await msg.edit(embed=embed)
-                    return
-            await channel.send(embed=embed)
-        except discord.Forbidden: pass
+                    message_found = True
+                    print("✅ Bestehende Abmeldeübersicht aktualisiert")
+                    break
+            
+            # Wenn keine bestehende Nachricht gefunden wurde, sende eine neue
+            if not message_found:
+                await channel.send(embed=embed)
+                print("✅ Neue Abmeldeübersicht gesendet")
+                
+        except discord.Forbidden:
+            print("❌ Keine Berechtigung für Übersichts-Channel")
+        except Exception as e:
+            print(f"❌ Fehler beim Senden der Abmeldeübersicht: {e}")
+
+    @app_commands.command(name="abmeldeuebersicht", description="Aktualisiert die Abmeldeübersicht manuell.")
+    @app_commands.checks.has_permissions(administrator=True)
+    @log_on_completion
+    async def abmeldeuebersicht(self, interaction: discord.Interaction):
+        """Triggert das manuelle Senden/Aktualisieren der Abmeldeübersicht."""
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            await self.update_abmeldungs_uebersicht_async()
+            await interaction.followup.send("✅ Abmeldeübersicht wurde erfolgreich aktualisiert!", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"❌ Fehler beim Aktualisieren der Abmeldeübersicht: {str(e)}", ephemeral=True)
+            print(f"Fehler bei abmeldeuebersicht Command: {e}")
 
     @app_commands.command(name="admindelabmeldung", description="Löscht eine Abmeldung eines bestimmten Users.")
     @app_commands.describe(user="Das Mitglied, dessen Abmeldung gelöscht werden soll.")
@@ -249,3 +276,4 @@ class AbmeldungCommands(commands.Cog):
 
 async def setup(bot: "MyBot"):
     await bot.add_cog(AbmeldungCommands(bot))
+

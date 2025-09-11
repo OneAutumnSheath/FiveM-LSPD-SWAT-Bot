@@ -1,4 +1,7 @@
 roles:
+    '1068295101731831978':
+    - ("mitglieder.add")
+    - '"mitglieder.add"'
     '1097625891632316436':
     - wochentrennung
     '1097625893880479777':
@@ -66,6 +69,8 @@ roles:
     - aufstellung
     - units
     - personal
+    '1254505255564214303':
+    - personal.einstellen
     '1293917052511453224':
     - kasse.stand
     '1331306902897823745':
@@ -74,6 +79,13 @@ roles:
     - web.login
     '1367815114564173874':
     - upranksperre
+    '935017143467147294':
+    - '@has_permission("mitglieder.add")'
+    - ("mitglieder.add")
+    - ("mitglieder.remove")
+    - '"mitglieder.remove"'
+    - '@has_permission("mitglieder.remove")'
+    - mitglieder.add
 users:
     '1155133804235726869':
     - upranksperre
@@ -86,6 +98,9 @@ users:
     '477512925418881026':
     - stats_admin
     - '*'
+    '513633057086111744':
+    - '"mitglieder.add"'
+    - masscommands.format
     '523922957232504844':
     - sanktion
     '568742835818332170':

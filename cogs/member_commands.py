@@ -34,6 +34,8 @@ class MemberCommands(commands.Cog):
         response_message = f"✅ **{name}** wurde mit DN `{dn}` und Rang {rank.mention} hinzugefügt."
         if result.get("warning"):
             response_message += f"\n⚠️ **Warnung:** {result.get('warning')}"
+        if result.get("success"):
+            response_message += F"\n Hinzugefügt."
         await interaction.followup.send(response_message, ephemeral=True)
 
     @member_group.command(name="remove", description="Entfernt ein Mitglied aus der Datenbank.")
