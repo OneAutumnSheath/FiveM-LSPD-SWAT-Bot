@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import aiomysql
 import yaml
 import re
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Dict, Any, List
 
 if TYPE_CHECKING:
     from main import MyBot
@@ -20,6 +20,7 @@ class SanctionService(commands.Cog):
 
     async def cog_load(self):
         await self._ensure_table_exists()
+        await self._ensure_sanctions_table_exists()  # Neue Tabelle für Sanktionen
         self.verwarnung_cleanup_task.start()
 
     def cog_unload(self):
@@ -58,6 +59,30 @@ class SanctionService(commands.Cog):
             );
         """)
 
+    async def _ensure_sanctions_table_exists(self):
+        """Erstellt die Tabelle für Sanktionen falls sie nicht existiert."""
+        await self._execute_query("""
+            CREATE TABLE IF NOT EXISTS sanktionen (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                user_name VARCHAR(255) NOT NULL,
+                deckname VARCHAR(255) DEFAULT NULL,
+                strafe TEXT NOT NULL,
+                grund TEXT NOT NULL,
+                zahlungsdatum VARCHAR(50) NOT NULL,
+                erstellt_von_id BIGINT NOT NULL,
+                erstellt_von_name VARCHAR(255) NOT NULL,
+                erstellt_am DATETIME NOT NULL,
+                erledigt BOOLEAN DEFAULT FALSE,
+                erledigt_am DATETIME DEFAULT NULL,
+                erledigt_von_id BIGINT DEFAULT NULL,
+                erledigt_von_name VARCHAR(255) DEFAULT NULL,
+                KEY user_id_idx (user_id),
+                KEY erledigt_idx (erledigt),
+                KEY erstellt_am_idx (erstellt_am)
+            );
+        """)
+
     async def count_warnings_from_db(self, user_id: int) -> int:
         """Zählt aktive Verwarnungen für einen User aus der Datenbank."""
         result = await self._execute_query(
@@ -66,6 +91,71 @@ class SanctionService(commands.Cog):
             fetch="one"
         )
         return result['count'] if result else 0
+
+    async def save_sanction_to_db(self, user: discord.Member, strafe: str, grund: str, 
+                                 zahlungsdatum: str, erstellt_von: discord.Member, deckname: str = None):
+        """Speichert eine neue Sanktion in der Datenbank."""
+        await self._execute_query("""
+            INSERT INTO sanktionen (
+                user_id, user_name, deckname, strafe, grund, zahlungsdatum,
+                erstellt_von_id, erstellt_von_name, erstellt_am
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            user.id, user.display_name, deckname, strafe, grund, zahlungsdatum,
+            erstellt_von.id, erstellt_von.display_name, datetime.now(timezone.utc)
+        ))
+
+    async def get_open_sanctions(self, user_id: int = None) -> List[Dict]:
+        """Holt alle offenen Sanktionen oder nur die eines bestimmten Users."""
+        if user_id:
+            query = "SELECT * FROM sanktionen WHERE user_id = %s AND erledigt = FALSE ORDER BY erstellt_am DESC"
+            args = (user_id,)
+        else:
+            query = "SELECT * FROM sanktionen WHERE erledigt = FALSE ORDER BY erstellt_am DESC"
+            args = None
+        
+        result = await self._execute_query(query, args, fetch="all")
+        return result if result else []
+
+    async def get_sanction_by_id(self, sanction_id: int) -> Dict:
+        """Holt eine Sanktion anhand ihrer ID."""
+        result = await self._execute_query(
+            "SELECT * FROM sanktionen WHERE id = %s", 
+            (sanction_id,), 
+            fetch="one"
+        )
+        return result
+
+    async def mark_sanction_as_completed(self, sanction_id: int, completed_by: discord.Member) -> bool:
+        """Markiert eine Sanktion als erledigt."""
+        # Prüfe ob Sanktion existiert und noch offen ist
+        sanction = await self.get_sanction_by_id(sanction_id)
+        if not sanction or sanction['erledigt']:
+            return False
+
+        await self._execute_query("""
+            UPDATE sanktionen 
+            SET erledigt = TRUE, erledigt_am = %s, erledigt_von_id = %s, erledigt_von_name = %s 
+            WHERE id = %s
+        """, (
+            datetime.now(timezone.utc), 
+            completed_by.id, 
+            completed_by.display_name, 
+            sanction_id
+        ))
+        return True
+
+    async def get_all_sanctions(self, user_id: int = None, limit: int = 50) -> List[Dict]:
+        """Holt alle Sanktionen (erledigt und offen) mit optionalem User-Filter."""
+        if user_id:
+            query = "SELECT * FROM sanktionen WHERE user_id = %s ORDER BY erstellt_am DESC LIMIT %s"
+            args = (user_id, limit)
+        else:
+            query = "SELECT * FROM sanktionen ORDER BY erstellt_am DESC LIMIT %s"
+            args = (limit,)
+        
+        result = await self._execute_query(query, args, fetch="all")
+        return result if result else []
 
     async def extract_and_process_warnings(self, member: discord.Member, strafe: str) -> int:
         """

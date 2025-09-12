@@ -1,4 +1,19 @@
 # config/asservatenkammer_config.yaml
 
-# Die ID des Kanals, in dem das Button-Panel platziert wird und die Logs erscheinen.
-channel_id: 1213569256768282634
+# Multi-Server Konfiguration für die Asservatenkammer
+servers:
+  # Server 1 - LSPD
+  "934974535369891840":  # Guild ID als String
+    name: "LSPD"
+    channel_id: 1213569256768282634
+    
+  # Server 2 - BCSO
+  "1391787690625728625":  # Guild ID als String
+    name: "LSPD: Special Units"
+    channel_id: 1395464932660871228
+
+
+# Beispiel für weitere Konfigurationsoptionen (optional)
+# global_settings:
+#   default_timezone: "Europe/Berlin"
+#   log_retention_days: 90

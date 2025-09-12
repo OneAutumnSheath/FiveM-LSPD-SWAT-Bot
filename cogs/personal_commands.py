@@ -42,8 +42,7 @@ class PersonalCommands(commands.Cog):
             title="🆕 Einstellung",
             description=(f"**Hiermit wird {user.mention} als {result['rank_role'].mention} eingestellt.**\n\n"
                          f"**Grund:** {result['reason']}\n"
-                         f"**Dienstnummer:** `{result['dn']}`\n\n"
-                         f"Hochachtungsvoll,\n<@&{MGMT_ID}>"),
+                         f"**Dienstnummer:** `{result['dn']}`"),
             color=discord.Color.green()
         ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
@@ -81,8 +80,7 @@ class PersonalCommands(commands.Cog):
             title="📢 Kündigung",
             description=(f"**Hiermit wird {user.mention} offiziell aus dem LSPD entlassen.**\n\n"
                          f"**Grund:** {result['reason']}\n"
-                         f"**Dienstnummer:** `{result['dn']}`\n\n"
-                         f"Hochachtungsvoll,\n<@&{MGMT_ID}>"),
+                         f"**Dienstnummer:** `{result['dn']}`"),
             color=discord.Color.red()
         ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         
@@ -112,7 +110,6 @@ class PersonalCommands(commands.Cog):
         description = f"Hiermit wurde {user.mention} zum {neuer_rang.mention} befördert.\n\nGrund: {grund}\n\n"
         if result["dn_changed"]:
             description += f"Neue Dienstnummer: **{result['new_dn']}**\n\n"
-        description += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
         
         embed = discord.Embed(title="Beförderung", description=description, color=discord.Color.green()).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         if channel := self.bot.get_channel(PERSONAL_CHANGE):
@@ -140,7 +137,6 @@ class PersonalCommands(commands.Cog):
         description = f"Hiermit wurde {user.mention} zum {neuer_rang.mention} degradiert.\n\nGrund: {grund}\n\n"
         if result["dn_changed"]:
             description += f"Neue Dienstnummer: **{result['new_dn']}**\n\n"
-        description += f"Hochachtungsvoll,\n<@&{MGMT_ID}>"
 
         embed = discord.Embed(title="Degradierung", description=description, color=discord.Color.red()).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
         if channel := self.bot.get_channel(PERSONAL_CHANGE):
