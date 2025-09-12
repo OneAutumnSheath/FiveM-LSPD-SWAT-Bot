@@ -6,8 +6,8 @@ if TYPE_CHECKING:
     from main import MyBot
 
 # --- Konstanten ---
-AUFSTELLUNG_CHANNEL_ID = 1136004218436722688
-PING_ROLE_ID = 1097625926243733536
+AUFSTELLUNG_CHANNEL_ID = 935022121468440626
+PING_ROLE_ID = 1213569073573793822
 
 class AufstellungService(commands.Cog):
     def __init__(self, bot: "MyBot"):

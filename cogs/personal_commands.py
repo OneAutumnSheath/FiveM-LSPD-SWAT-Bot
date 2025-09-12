@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord import app_commands, Interaction
 from typing import TYPE_CHECKING
 from utils.decorators import has_permission, log_on_completion
+from datetime import datetime, timezone
 
 if TYPE_CHECKING:
     from main import MyBot
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
 PERSONAL_CHANGE = 1213569259024678973
 PERSONAL_FIRE = 1213569260996010135
 PERSONAL_HIRE = 1231644627698712586
+TRAINING_CHANNEL = 1213569272379473970
 MGMT_ID = 1097648080020574260
 
 class PersonalCommands(commands.Cog):
@@ -38,13 +40,18 @@ class PersonalCommands(commands.Cog):
         if not result.get("success"):
             return await interaction.followup.send(f"❌ **Fehler:** {result.get('error', 'Unbekannter Fehler')}", ephemeral=True)
         
+        # Embed im neuen Format erstellen
         embed_announcement = discord.Embed(
-            title="🆕 Einstellung",
-            description=(f"**Hiermit wird {user.mention} als {result['rank_role'].mention} eingestellt.**\n\n"
-                         f"**Grund:** {result['reason']}\n"
-                         f"**Dienstnummer:** `{result['dn']}`"),
+            title="Einstellung im Los Santos Police Department",
+            description=f"Sehr geehrtes Los Santos Police Department!\nHiermit geben wir die Einstellung von {user.mention} bekannt.",
             color=discord.Color.green()
-        ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        )
+        
+        # Felder hinzufügen
+        embed_announcement.add_field(name="Grund", value=result['reason'], inline=False)
+        
+        # Footer mit Datum
+        embed_announcement.set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources des Departments - in Vertretung für den Chief of Police Tommy Lancaster • {datetime.now().strftime('%d.%m.%Y, %H:%M Uhr')}")
         
         if channel := self.bot.get_channel(PERSONAL_HIRE):
             await channel.send(content=user.mention, embed=embed_announcement)
@@ -76,17 +83,87 @@ class PersonalCommands(commands.Cog):
         if not result.get("success"):
             return await interaction.followup.send(f"❌ **Fehler:** {result.get('error', 'Unbekannter Fehler')}", ephemeral=True)
 
+        # Embed im neuen Format erstellen
         embed_announcement = discord.Embed(
-            title="📢 Kündigung",
-            description=(f"**Hiermit wird {user.mention} offiziell aus dem LSPD entlassen.**\n\n"
-                         f"**Grund:** {result['reason']}\n"
-                         f"**Dienstnummer:** `{result['dn']}`"),
+            title="Kündigung vom Los Santos Police Department",
+            description=f"Sehr geehrtes Los Santos Police Department!\nHiermit geben wir die Kündigung von {user.display_name} bekannt.",
             color=discord.Color.red()
-        ).set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources - in Vetretung des Chiefs of Police Tommy Lancaster")
+        )
+        
+        # Felder hinzufügen
+        embed_announcement.add_field(name="Name", value=user.display_name, inline=False)
+        embed_announcement.add_field(name="Dienstnummer", value=result['dn'], inline=False)
+        embed_announcement.add_field(name="Grund", value=result['reason'], inline=False)
+        
+        # Footer mit Datum
+        embed_announcement.set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources des Departments - in Vertretung für den Chief of Police Tommy Lancaster • {datetime.now().strftime('%d.%m.%Y, %H:%M Uhr')}")
         
         if channel := self.bot.get_channel(PERSONAL_FIRE):
             await channel.send(content=user.mention, embed=embed_announcement)
         await interaction.followup.send(f"✅ {user.display_name} wurde erfolgreich gekündigt.", ephemeral=True)
+
+    @personal_group.command(name="kuendigung_ankuendigung", description="Erstellt eine einfache Kündigungs-Ankündigung.")
+    @app_commands.describe(user="Der Name der Person", grund="Grund der Kündigung", dn="Dienstnummer der Person")
+    @has_permission("personal.kuendigung_ankuendigung")
+    @log_on_completion
+    async def kuendigung_ankuendigung(self, interaction: Interaction, user: str, grund: str, dn: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        
+        # Embed für die Ankündigung erstellen
+        embed_announcement = discord.Embed(
+            title="Kündigung vom Los Santos Police Department",
+            description=f"Sehr geehrtes Los Santos Police Department!\nHiermit geben wir die Kündigung von {user} bekannt.",
+            color=discord.Color.red()
+        )
+        
+        # Felder hinzufügen
+        embed_announcement.add_field(name="Name", value=user, inline=False)
+        embed_announcement.add_field(name="Dienstnummer", value=dn, inline=False)
+        embed_announcement.add_field(name="Grund", value=grund, inline=False)
+        
+        # Footer mit Datum
+        embed_announcement.set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources des Departments - in Vertretung für den Chief of Police Tommy Lancaster • {datetime.now().strftime('%d.%m.%Y, %H:%M Uhr')}")
+        
+        # Ankündigung im Personal-Kanal posten
+        if channel := self.bot.get_channel(PERSONAL_FIRE):
+            await channel.send(embed=embed_announcement)
+        
+        # Bestätigung an den ausführenden User
+        await interaction.followup.send(f"✅ Kündigungs-Ankündigung für {user} wurde erfolgreich gepostet.", ephemeral=True)
+
+    @personal_group.command(name="training_absolviert", description="Markiert ein Training als absolviert und gibt dem User die entsprechende Rolle.")
+    @app_commands.describe(user="Das Mitglied", ausbildungsrolle="Die zu vergebende Ausbildungsrolle", grund="Grund/Art der Ausbildung")
+    @has_permission("personal.training_absolviert")
+    @log_on_completion
+    async def training_absolviert(self, interaction: Interaction, user: discord.Member, ausbildungsrolle: discord.Role, grund: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        
+        # Rolle dem User geben
+        try:
+            await user.add_roles(ausbildungsrolle, reason=f"Training absolviert: {grund}")
+        except discord.HTTPException as e:
+            return await interaction.followup.send(f"❌ **Fehler:** Konnte {ausbildungsrolle.mention} nicht zu {user.mention} hinzufügen. {e}", ephemeral=True)
+        
+        # Embed für die Ankündigung erstellen
+        embed_announcement = discord.Embed(
+            title="Ausbildung im Los Santos Police Department",
+            description=f"Sehr geehrtes Los Santos Police Department!\nHiermit geben wir die Ausbildung von {user.mention} bekannt.",
+            color=discord.Color.green()
+        )
+        
+        # Felder hinzufügen
+        embed_announcement.add_field(name="Ausbildungsrolle", value=ausbildungsrolle.mention, inline=False)
+        embed_announcement.add_field(name="Grund", value=grund, inline=False)
+        
+        # Footer mit Datum
+        embed_announcement.set_footer(text=f"Ausgeführt von {interaction.user.display_name} | Ausgeführt von der Human Resources des Departments - in Vertretung für den Chief of Police Tommy Lancaster • {datetime.now().strftime('%d.%m.%Y, %H:%M Uhr')}")
+        
+        # Ankündigung im Training-Kanal posten
+        if channel := self.bot.get_channel(TRAINING_CHANNEL):
+            await channel.send(content=user.mention, embed=embed_announcement)
+        
+        # Bestätigung an den ausführenden User
+        await interaction.followup.send(f"✅ {user.mention} hat erfolgreich die Ausbildung absolviert und {ausbildungsrolle.mention} erhalten.", ephemeral=True)
 
     @personal_group.command(name="uprank", description="Befördert ein Mitglied.")
     @app_commands.describe(user="Das Mitglied", neuer_rang="Der neue Rang", grund="Grund", sperre_ignorieren="Ignoriert Uprank-Sperre (Admin)")

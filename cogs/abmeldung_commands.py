@@ -233,7 +233,7 @@ class AbmeldungCommands(commands.Cog):
             print(f"❌ Fehler beim Senden der Abmeldeübersicht: {e}")
 
     @app_commands.command(name="abmeldeuebersicht", description="Aktualisiert die Abmeldeübersicht manuell.")
-    @app_commands.checks.has_permissions(administrator=True)
+    #@app_commands.checks.has_permissions(administrator=True)
     @log_on_completion
     async def abmeldeuebersicht(self, interaction: discord.Interaction):
         """Triggert das manuelle Senden/Aktualisieren der Abmeldeübersicht."""

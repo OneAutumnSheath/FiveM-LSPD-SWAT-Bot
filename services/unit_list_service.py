@@ -6,7 +6,7 @@ import json
 import jwt
 import aiohttp
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Dict, List, Any
+from typing import TYPE_CHECKING, Dict, List, Any, Set
 
 if TYPE_CHECKING:
     from main import MyBot
@@ -54,9 +54,61 @@ class UnitListService(commands.Cog):
         # Google Sheets Cache
         self._access_token = None
         self._token_expires_at = 0
+        # Cache für Channel-Nachrichten: channel_id -> {group_name: [message_ids]}
+        self._channel_messages = {}
 
     async def cog_load(self):
         await self._ensure_table_exists()
+        await self._cache_existing_messages()
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
+        """Event-Listener für Rollenänderungen."""
+        # Prüfen ob sich Rollen geändert haben
+        if set(before.roles) == set(after.roles):
+            return
+            
+        # Prüfen ob eine der geänderten Rollen in unserem Tracking ist
+        changed_roles = set(after.roles) ^ set(before.roles)
+        all_tracked_roles = set()
+        
+        for channel_id, groups in TRACKED_UNITS.items():
+            for role_ids in groups.values():
+                all_tracked_roles.update(role_ids)
+        
+        # Wenn eine relevante Rolle geändert wurde, Update auslösen
+        for role in changed_roles:
+            if role.id in all_tracked_roles:
+                print(f"🔄 Rolle {role.name} wurde für {after.display_name} geändert - Update wird ausgelöst")
+                await self.trigger_update()
+                break
+
+    async def _cache_existing_messages(self):
+        """Cached bestehende Bot-Nachrichten in den Unit-List Channels."""
+        print("🔍 Cache bestehende Unit-List Nachrichten...")
+        
+        for channel_id in TRACKED_UNITS.keys():
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                continue
+                
+            self._channel_messages[channel_id] = {}
+            
+            # Durchsuche die letzten 200 Nachrichten nach Bot-Nachrichten mit Embeds
+            async for message in channel.history(limit=200):
+                if message.author == self.bot.user and message.embeds:
+                    embed = message.embeds[0]
+                    if embed.title:
+                        # Extrahiere Gruppenname aus dem Titel
+                        for group_name in TRACKED_UNITS[channel_id].keys():
+                            emoji = GROUP_EMOJIS.get(group_name, "📁")
+                            if embed.title.startswith(f"{emoji} {group_name}"):
+                                if group_name not in self._channel_messages[channel_id]:
+                                    self._channel_messages[channel_id][group_name] = []
+                                self._channel_messages[channel_id][group_name].append(message.id)
+                                break
+                                
+        print("✅ Nachricht-Cache initialisiert")
 
     async def _execute_query(self, query: str, args: tuple = None, fetch: str = None):
         pool: aiomysql.Pool = self.bot.db_pool
@@ -102,6 +154,9 @@ class UnitListService(commands.Cog):
         embeds = []
         group_emoji = GROUP_EMOJIS.get(group_name, "📁")
         
+        # Set für bereits verwendete Member
+        used_members: Set[int] = set()
+        
         # Erstes Embed für die Gruppe erstellen
         current_embed = discord.Embed(
             title=f"{group_emoji} {group_name}",
@@ -111,11 +166,16 @@ class UnitListService(commands.Cog):
         
         # Beschreibung hinzufügen
         total_members = 0
+        unique_members: Set[int] = set()
+        
+        # Zähle einzigartige Members (keine Duplikate)
         for role_id in role_ids:
             role = guild.get_role(role_id)
             if role:
-                total_members += len(role.members)
+                for member in role.members:
+                    unique_members.add(member.id)
         
+        total_members = len(unique_members)
         current_embed.description = f"**Gesamtmitglieder:** {total_members}"
 
         for role_id in role_ids:
@@ -123,16 +183,22 @@ class UnitListService(commands.Cog):
             if not role:
                 continue
 
-            # Mitglieder sortieren und formatieren
-            sorted_members = sorted(role.members, key=self._extract_dienstnummer)
+            # Mitglieder sortieren und formatieren, aber nur die, die noch nicht verwendet wurden
+            available_members = [m for m in role.members if m.id not in used_members]
+            sorted_members = sorted(available_members, key=self._extract_dienstnummer)
             member_lines = []
             
             for member in sorted_members:
                 deckname = await self.get_deckname(member.id)
                 member_text = f"{member.mention} [**{deckname}**]" if deckname else member.mention
                 member_lines.append(member_text)
+                used_members.add(member.id)  # Als verwendet markieren
             
-            field_content = "\n".join(member_lines) or "*Keine Mitglieder*"
+            # Überspringe Rollen ohne neue Members
+            if not member_lines:
+                continue
+                
+            field_content = "\n".join(member_lines)
             role_name = f"🔹 {role.name}"
 
             # Prüfen, ob ein neues Embed benötigt wird
@@ -241,7 +307,7 @@ class UnitListService(commands.Cog):
         return current_embed
 
     async def _update_channel_messages(self, channel_id: int):
-        """Aktualisiert alle Nachrichten in einem Channel - eine Nachricht pro Gruppe."""
+        """Aktualisiert Nachrichten in einem Channel durch Bearbeitung statt Neuversendung."""
         channel = self.bot.get_channel(channel_id)
         if not channel:
             print(f"⚠️ Channel {channel_id} nicht gefunden")
@@ -255,47 +321,77 @@ class UnitListService(commands.Cog):
 
         groups = TRACKED_UNITS[channel_id]
 
-        try:
-            print(f"🗑️ Lösche alte Nachrichten in Channel {channel.name}")
-            # Alle alten Bot-Nachrichten löschen
-            deleted_count = 0
-            async for message in channel.history(limit=200):  # Höheres Limit für viele Gruppen
-                if message.author == self.bot.user:
-                    await message.delete()
-                    deleted_count += 1
-            
-            if deleted_count > 0:
-                print(f"✅ {deleted_count} alte Nachrichten gelöscht")
-                
-        except discord.Forbidden:
-            print("❌ Keine Berechtigung zum Löschen von Nachrichten")
-        except Exception as e:
-            print(f"⚠️ Fehler beim Löschen: {e}")
-
-        # Für jede Gruppe separate Nachrichten senden
-        total_messages_sent = 0
-        
+        # Für jede Gruppe die Nachrichten aktualisieren oder erstellen
         for group_name, role_ids in groups.items():
             try:
-                print(f"📤 Erstelle Nachrichten für Gruppe: {group_name}")
+                print(f"🔄 Aktualisiere Gruppe: {group_name}")
                 
-                # Embeds für diese Gruppe erstellen
-                group_embeds = await self._create_embed_for_group(group_name, role_ids, guild)
+                # Neue Embeds für diese Gruppe erstellen
+                new_embeds = await self._create_embed_for_group(group_name, role_ids, guild)
                 
-                if not group_embeds:
+                if not new_embeds:
                     print(f"⚠️ Keine Embeds für Gruppe {group_name} erstellt")
                     continue
-                
-                # Alle Embeds dieser Gruppe senden
-                for i, embed in enumerate(group_embeds, 1):
-                    await channel.send(embed=embed)
-                    total_messages_sent += 1
-                    print(f"✅ {group_name} - Nachricht {i}/{len(group_embeds)} gesendet")
+
+                # Bestehende Nachrichten für diese Gruppe holen
+                existing_messages = []
+                if (channel_id in self._channel_messages and 
+                    group_name in self._channel_messages[channel_id]):
                     
+                    for msg_id in self._channel_messages[channel_id][group_name]:
+                        try:
+                            message = await channel.fetch_message(msg_id)
+                            existing_messages.append(message)
+                        except discord.NotFound:
+                            print(f"⚠️ Nachricht {msg_id} wurde gelöscht")
+                            continue
+
+                # Nachrichten aktualisieren oder erstellen
+                messages_updated = 0
+                messages_created = 0
+                
+                for i, embed in enumerate(new_embeds):
+                    if i < len(existing_messages):
+                        # Bestehende Nachricht bearbeiten
+                        try:
+                            await existing_messages[i].edit(embed=embed)
+                            messages_updated += 1
+                        except Exception as e:
+                            print(f"⚠️ Fehler beim Bearbeiten der Nachricht: {e}")
+                    else:
+                        # Neue Nachricht erstellen
+                        try:
+                            new_message = await channel.send(embed=embed)
+                            # Cache aktualisieren
+                            if channel_id not in self._channel_messages:
+                                self._channel_messages[channel_id] = {}
+                            if group_name not in self._channel_messages[channel_id]:
+                                self._channel_messages[channel_id][group_name] = []
+                            self._channel_messages[channel_id][group_name].append(new_message.id)
+                            messages_created += 1
+                        except Exception as e:
+                            print(f"⚠️ Fehler beim Senden der Nachricht: {e}")
+
+                # Überschüssige alte Nachrichten löschen
+                messages_deleted = 0
+                if len(existing_messages) > len(new_embeds):
+                    for i in range(len(new_embeds), len(existing_messages)):
+                        try:
+                            await existing_messages[i].delete()
+                            messages_deleted += 1
+                            # Aus Cache entfernen
+                            if (channel_id in self._channel_messages and 
+                                group_name in self._channel_messages[channel_id]):
+                                msg_id = existing_messages[i].id
+                                if msg_id in self._channel_messages[channel_id][group_name]:
+                                    self._channel_messages[channel_id][group_name].remove(msg_id)
+                        except Exception as e:
+                            print(f"⚠️ Fehler beim Löschen der überschüssigen Nachricht: {e}")
+
+                print(f"✅ {group_name}: {messages_updated} aktualisiert, {messages_created} erstellt, {messages_deleted} gelöscht")
+                
             except Exception as e:
-                print(f"❌ Fehler beim Senden der Nachrichten für Gruppe {group_name}: {e}")
-        
-        print(f"🎉 Insgesamt {total_messages_sent} Nachrichten für {len(groups)} Gruppen gesendet")
+                print(f"❌ Fehler beim Aktualisieren der Gruppe {group_name}: {e}")
 
     # --- Öffentliche API-Methoden ---
     

@@ -18,7 +18,6 @@ class MemberCommands(commands.Cog):
     @member_group.command(name="add", description="Fügt ein Mitglied zur Datenbank hinzu.")
     @app_commands.describe(dn="Die Dienstnummer", name="Vollständiger Name", rank="Die Rang-Rolle", discord_user="Das Discord-Mitglied")
     @has_permission("mitglieder.add")
-    @log_on_completion
     async def add_member(self, interaction: discord.Interaction, dn: int, name: str, rank: discord.Role, discord_user: discord.Member):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: MemberService = self.bot.get_cog("MemberService")
@@ -41,7 +40,6 @@ class MemberCommands(commands.Cog):
     @member_group.command(name="remove", description="Entfernt ein Mitglied aus der Datenbank.")
     @app_commands.describe(dn="Die DN des Mitglieds", discord_user="Das Discord-Mitglied")
     @has_permission("mitglieder.remove")
-    @log_on_completion
     async def remove_member(self, interaction: discord.Interaction, dn: int = None, discord_user: discord.Member = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: MemberService = self.bot.get_cog("MemberService")
@@ -66,7 +64,6 @@ class MemberCommands(commands.Cog):
     @member_group.command(name="setunit", description="Setzt eine Unit für ein Mitglied.")
     @app_commands.describe(member="Das Mitglied", role="Die Unit-Rolle", status="Aktiv (True) oder Inaktiv (False)")
     @has_permission("mitglieder.setunit")
-    @log_on_completion
     async def set_unit(self, interaction: discord.Interaction, member: discord.Member, role: discord.Role, status: bool):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: MemberService = self.bot.get_cog("MemberService")
@@ -87,7 +84,6 @@ class MemberCommands(commands.Cog):
     @member_group.command(name="changerank", description="Ändert den Rang eines Mitglieds in der DB.")
     @app_commands.describe(dn="Die DN des Mitglieds", new_rank="Die neue Rang-Rolle")
     @has_permission("mitglieder.changerank")
-    @log_on_completion
     async def changerank(self, interaction: discord.Interaction, dn: int, new_rank: discord.Role):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: MemberService = self.bot.get_cog("MemberService")
@@ -104,7 +100,6 @@ class MemberCommands(commands.Cog):
     @member_group.command(name="changedn", description="Ändert die Dienstnummer eines Mitglieds in der DB.")
     @app_commands.describe(current_dn="Die aktuelle DN", new_dn="Die neue DN")
     @has_permission("mitglieder.changedn")
-    @log_on_completion
     async def changedn(self, interaction: discord.Interaction, current_dn: int, new_dn: int):
         await interaction.response.defer(ephemeral=True, thinking=True)
         service: MemberService = self.bot.get_cog("MemberService")

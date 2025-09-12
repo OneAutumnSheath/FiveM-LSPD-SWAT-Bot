@@ -106,7 +106,7 @@ class SanctionCommands(commands.Cog):
         )
         
         # LSPD Logo (falls vorhanden)
-        embed.set_thumbnail(url="https://i.imgur.com/your-lspd-logo.png")  # Ersetze mit tatsächlicher URL
+        embed.set_thumbnail(url="https://i.ibb.co/b5F0vJN/lspd.png")  # Ersetze mit tatsächlicher URL
         
         # Nachricht senden
         await channel.send(content=user.mention, embed=embed)

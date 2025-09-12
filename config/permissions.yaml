@@ -86,6 +86,17 @@ roles:
     - '"mitglieder.remove"'
     - '@has_permission("mitglieder.remove")'
     - mitglieder.add
+    - personal.kuendigen
+    - '"personal.kuendigen"'
+    - '@has_permission("personal.kuendigen")'
+    - personal.einstellen
+    - personal.uprank
+    - personal.derank
+    - personal.neuedn
+    - personal.rename
+    - sanktion.create
+    '935017286442561606':
+    - personal.kuendigen
 users:
     '1155133804235726869':
     - upranksperre

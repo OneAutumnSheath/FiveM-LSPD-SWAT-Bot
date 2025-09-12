@@ -20,3 +20,4 @@ tracked_messages.json
 __pycache__
 data
 .env
+member_export.csv
